@@ -21,3 +21,10 @@ def delete_wallet():
 def all_wallets():
     data = UserWallet.allWallets()
     return data
+
+# display user wallet details by user id
+
+@bp_app.route('/user_wallet_details', methods=['POST'])
+def wallet_details():
+    data = UserWallet.getWalletDetails()
+    return data

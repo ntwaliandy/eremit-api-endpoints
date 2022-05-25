@@ -61,6 +61,24 @@ class UserWallet:
             print(e)
             response = make_response(403, str(e))
             return response
+    
+    # wallet details basing on user id
+    def getWalletDetails():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+
+            data = get_user_details(_user_id)
+            response = jsonify(data)
+            if len(data) <= 0:
+                print(data)
+                return make_response(403, "No wallet for User ID " + str(_user_id) + "!")
+            return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "syntax error")
+            return response
 
 
 
@@ -75,6 +93,6 @@ def make_response(status, message):
 
 # get user details basing on e-wallet
 def get_user_details(userId):
-    sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
+    sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' "
     data = db.select(sql)
     return data
