@@ -29,6 +29,9 @@ def login_user():
 # delete a user
 @bp_app.route('/delete_user', methods=['DELETE'])
 def delete_user():
+    #isValid =  checkJWT
+    #if is not isValidre
+    #return an errr
     data = User.deleteUser()
     return data
 

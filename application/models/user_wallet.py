@@ -1,4 +1,5 @@
 import pymysql
+import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 
@@ -9,15 +10,14 @@ class UserWallet:
     # create user wallet
 
     @staticmethod
-    def createWallet():
+    def createWallet(userId):
         try:
-            _json = request.json
-            _user_id = _json['user_id']
-            _balance = _json['balance']
-            _currency_id = _json['currency_id']
-            _wallet_id = _json['wallet_id']
 
-            check_user = get_user_details(_user_id)
+            _wallet_id = uuid.uuid4()
+            _user_id = userId
+            _balance = 0
+            _currency_id = "UGX"
+            check_user = get_user_details(userId)
 
             if len(check_user) > 0:
                 response = make_response(403, "user already exists")
@@ -27,8 +27,7 @@ class UserWallet:
             addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_id": _currency_id, "wallet_id": _wallet_id}
             data = db.insert('user_wallet', **addWallet_dict)
 
-            response = make_response(100, "wallet created successfully")
-            return response
+            return _wallet_id
         except Exception as e:
             print(e)
             response = make_response(403, str(e))

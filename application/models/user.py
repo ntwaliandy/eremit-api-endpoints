@@ -1,6 +1,8 @@
 import pymysql
+import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
+from application.models.user_wallet import UserWallet
 
 class User:
     def __init__(self):
@@ -14,6 +16,7 @@ class User:
     @staticmethod
     def userAdd():
         try:
+            _user_id = uuid.uuid4()
             _json = request.json
             _first_name = _json['first_name']
             _last_name = _json['last_name']
@@ -26,9 +29,10 @@ class User:
             if len(check_user) > 0:
                 return make_response(403, "User Already Exists")
             
-            addUser_dict = {"first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": _password, "profile_pic": _profile_pic}
+            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": _password, "profile_pic": _profile_pic}
             data = db.insert('user', **addUser_dict)
-            response = make_response(100, "Added Successfully")
+            create_user_wallet = UserWallet.createWallet(_user_id)
+            response = jsonify(_user_id)
 
             return response
         except Exception as e:
