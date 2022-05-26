@@ -1,5 +1,6 @@
 import pymysql
 import uuid
+import phonenumbers
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 from application.models.user_wallet import UserWallet
@@ -25,14 +26,18 @@ class User:
             _password = _json['password']
             _profile_pic = _json['profile_pic']
 
+            phoneNumber = phonenumbers.parse(_phone_number)
+            check_phoneNumber = phonenumbers.is_possible_number(phoneNumber)
             check_user = get_user_detail(_email, _phone_number)
+            if check_phoneNumber == False:
+                return make_response(403, "Invalid phone number")
             if len(check_user) > 0:
                 return make_response(403, "User Already Exists")
             
             addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": _password, "profile_pic": _profile_pic}
             data = db.insert('user', **addUser_dict)
             create_user_wallet = UserWallet.createWallet(_user_id)
-            response = jsonify(_user_id)
+            response = user_created_response(100, "User created successfully", _user_id)
 
             return response
         except Exception as e:
@@ -79,7 +84,8 @@ class User:
                 data = make_response(403, "failed to log in")
                 return data
 
-            return make_response(100, "user logged in successfully")
+            response = user_created_response(100, "user loggedin successfully", check_user)
+            return response
         
         except Exception as e:
             print(e)
@@ -144,3 +150,11 @@ def get_user_details_by_id(userId):
     sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
     data = db.select(sql)
     return data
+
+# user created response
+def user_created_response(status, message, userId):
+    return jsonify({"user_id": userId, "status": status, "message": message})
+
+# user logged in response
+def user_logged_response(status, message, data):
+    return jsonify({"status": status, "message": message, "data": data})
