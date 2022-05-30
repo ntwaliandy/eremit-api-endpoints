@@ -1,4 +1,5 @@
 import pymysql
+import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 
@@ -13,6 +14,7 @@ class Transaction:
     def createTransaction():
         try:
             _json = request.json
+            _transaction_id = uuid.uuid4()
             _from_account = _json['from_account']
             _to_account = _json['to_account']
             _transaction_type = _json['transaction_type']
@@ -26,7 +28,7 @@ class Transaction:
                 response = make_response('403', "invalid wallet ID")
                 return response
 
-            create_transaction_dict = {"from_account": _from_account, "to_account": _to_account, "transaction_type": _transaction_type, "amount": _amount, "currency_id": _currency_id, "wallet_id": _wallet_id}
+            create_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "transaction_type": _transaction_type, "amount": _amount, "currency_id": _currency_id, "wallet_id": _wallet_id}
             data = db.insert('transaction', **create_transaction_dict)
             response = make_response(100, "transaction statement created")
             return response

@@ -1,4 +1,5 @@
 import pymysql
+import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 
@@ -9,10 +10,11 @@ class Notification:
     # create notification
     def createNotification():
         try:
+            _notification_id = uuid.uuid4()
             _json = request.json
             _message = _json['message']
 
-            addNotification_dic = {"message": _message}
+            addNotification_dic = {"notification_id": _notification_id, "message": _message}
             data = db.insert('notification', **addNotification_dic)
 
             response = make_response(100, "Notification created successfully!!")

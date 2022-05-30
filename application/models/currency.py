@@ -1,4 +1,5 @@
 import pymysql
+import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 
@@ -9,6 +10,7 @@ class Currency:
     @staticmethod
     def createCurrency():
         try:
+            _currency_id = uuid.uuid4()
             _json = request.json
             _currency_name = _json['currency_name']
             _currency_code = _json['currency_code']
@@ -19,7 +21,7 @@ class Currency:
                 print(check_currency)
                 return response
             
-            currency_dict = {"currency_name": _currency_name, "currency_code": _currency_code}
+            currency_dict = {"currency_id": _currency_id, "currency_name": _currency_name, "currency_code": _currency_code}
 
             data = db.insert('currencies', **currency_dict)
             response = make_response(100, "currency created successfully")
