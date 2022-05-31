@@ -1,19 +1,27 @@
-import pymysql
+import jwt
+from datetime import datetime, timedelta
+from application import application
 import uuid
 import phonenumbers
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 from application.models.user_wallet import UserWallet
+from application.models.auth import token_required
 
+
+application.config['SECRET_KEY'] = 'a6d4c1d6828549b6ada2d94ef4aeb9a1'
 class User:
     def __init__(self):
         print('user model')
 
     @staticmethod
+    @token_required
     def all_users():
         sql = "SELECT * FROM `user` "
         data = db.select(sql)
         return jsonify(data)
+
+
     @staticmethod
     def userAdd():
         try:
@@ -37,7 +45,15 @@ class User:
             addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": _password, "profile_pic": _profile_pic}
             data = db.insert('user', **addUser_dict)
             create_user_wallet = UserWallet.createWallet(_user_id)
-            response = user_created_response(100, "User created successfully", _user_id)
+
+            # generating jwt for user sessions
+            token = jwt.encode({
+                'email': _email,
+                'expiration': str(datetime.now() + timedelta(seconds=120))
+            },
+                application.config['SECRET_KEY'])
+
+            response = user_created_response(100, "User created successfully", _user_id, token)
 
             return response
         except Exception as e:
@@ -46,6 +62,7 @@ class User:
             return response
 
     @staticmethod
+    @token_required
     def userUpdate():
         try:
             _json = request.json
@@ -84,7 +101,13 @@ class User:
                 data = make_response(403, "failed to log in")
                 return data
 
-            response = user_created_response(100, "user loggedin successfully", check_user)
+            token = jwt.encode({
+                'email': _email,
+                'expiration': str(datetime.now() + timedelta(seconds=120))
+            },
+                application.config['SECRET_KEY'])
+            response = user_logged_response(100, "user loggedin successfully", check_user, token)
+            
             return response
         
         except Exception as e:
@@ -93,6 +116,7 @@ class User:
             return data
 
     # delete user
+    @token_required
     def deleteUser():
         try:
             _json = request.json
@@ -109,6 +133,7 @@ class User:
 
     # get user details by id
     @staticmethod
+    @token_required
     def getUserDetailsById():
         try:
             _json = request.json
@@ -152,9 +177,10 @@ def get_user_details_by_id(userId):
     return data
 
 # user created response
-def user_created_response(status, message, userId):
-    return jsonify({"user_id": userId, "status": status, "message": message})
+def user_created_response(status, message, userId, Token):
+    return jsonify({"user_id": userId, "status": status, "message": message, "token": Token})
 
 # user logged in response
-def user_logged_response(status, message, data):
-    return jsonify({"status": status, "message": message, "data": data})
+def user_logged_response(status, message, data, Token):
+    return jsonify({"message": message, "data": data, "status": status, "token": Token})
+

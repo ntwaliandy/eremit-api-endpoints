@@ -2,12 +2,15 @@ import pymysql
 import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
+from application.models.auth import token_required
+
 
 class Currency:
     def __init__(self):
         print('currency model')
 
     @staticmethod
+    @token_required
     def createCurrency():
         try:
             _currency_id = uuid.uuid4()
@@ -34,6 +37,7 @@ class Currency:
     
     # display all currencies
     @staticmethod
+    @token_required
     def allCurrencies():
         sql = "SELECT * FROM currencies"
         data = db.select(sql)
@@ -41,6 +45,7 @@ class Currency:
 
     # delete a currency
     @staticmethod
+    @token_required
     def deleteCurrency():
         try:
             _json = request.json

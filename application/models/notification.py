@@ -2,12 +2,13 @@ import pymysql
 import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
-
+from application.models.auth import token_required
 class Notification:
     def __init__(self):
         print("notification model")
 
     # create notification
+    @token_required
     def createNotification():
         try:
             _notification_id = uuid.uuid4()
@@ -26,6 +27,7 @@ class Notification:
             return response
 
     # get all notification
+    @token_required
     def getNotifications():
         try:
             sql = "SELECT * FROM `notification` "

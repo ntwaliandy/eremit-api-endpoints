@@ -1,7 +1,7 @@
-import pymysql
 import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
+from application.models.auth import token_required
 
 class UserWallet:
     def __init__(self):
@@ -50,6 +50,7 @@ class UserWallet:
 
     # display all wallets
     @staticmethod
+    @token_required
     def allWallets():
         try:
             sql = "SELECT * FROM `user_wallet` "
@@ -62,6 +63,7 @@ class UserWallet:
             return response
     
     # wallet details basing on user id
+    @token_required
     def getWalletDetails():
         try:
             _json = request.json

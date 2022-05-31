@@ -2,7 +2,7 @@ import pymysql
 import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
-
+from application.models.auth import token_required
 
 
 class Transaction:
@@ -11,6 +11,7 @@ class Transaction:
 
     # create user transaction
     @staticmethod
+    @token_required
     def createTransaction():
         try:
             _json = request.json
@@ -40,6 +41,7 @@ class Transaction:
 
     # display all wallets
     @staticmethod
+    @token_required
     def allTransactions():
         try:
             sql = "SELECT * FROM `transaction` "
@@ -53,6 +55,7 @@ class Transaction:
 
     # get all transactions basing on the wallet
     @staticmethod
+    @token_required
     def allCurrencyWallet():
         try:
             _json = request.json
