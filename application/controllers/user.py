@@ -1,3 +1,4 @@
+from crypt import methods
 from flask import Blueprint, request, jsonify, json
 from application.models.user import User
 
@@ -39,4 +40,10 @@ def delete_user():
 @bp_app.route('/get_user_by_id', methods=['POST'])
 def get_user_by_id():
     data = User.getUserDetailsById()
+    return data
+
+# otp verification
+@bp_app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    data = User.verifyOTP()
     return data

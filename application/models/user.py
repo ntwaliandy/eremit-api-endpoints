@@ -1,9 +1,13 @@
+import hashlib
+from random import randint
+from urllib import response
 import jwt
 from datetime import datetime, timedelta
 from application import application
 import uuid
 import phonenumbers
 from flask import jsonify, request
+from application.libs.sms import send
 from helper.dbhelper import Database as db
 from application.models.user_wallet import UserWallet
 from application.models.auth import token_required
@@ -33,7 +37,8 @@ class User:
             _email = _json['email']
             _password = _json['password']
             _profile_pic = _json['profile_pic']
-
+            # hash password
+            hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
             phoneNumber = phonenumbers.parse(_phone_number)
             check_phoneNumber = phonenumbers.is_possible_number(phoneNumber)
             check_user = get_user_detail(_email, _phone_number)
@@ -42,8 +47,43 @@ class User:
             if len(check_user) > 0:
                 return make_response(403, "User Already Exists")
             
-            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": _password, "profile_pic": _profile_pic}
+            otp_generated = randint(0000,9999)
+            status = 'pending'
+            otp_sent = send(otp_generated, _email)
+            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "status": status}
             data = db.insert('user', **addUser_dict)
+            
+            response = make_response(100, otp_sent)
+
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "Invalid data types")
+            return response
+
+    # verify otp
+    @staticmethod
+    def verifyOTP():
+        try:
+            _json = request.json
+            _email = _json['email']
+            _requested_otp = _json['otp']
+
+            check_user = get_user_by_email(_email)
+            if len(check_user) <= 0:
+                response = make_response(403, "Wrong Email")
+                return response
+            
+            otp = check_user[0]['otp']
+            if _requested_otp != otp:
+                response = make_response(403, "Invalid OTP")
+                return response
+            status = 'Active'
+            _user_id = check_user[0]['user_id']
+
+            updatedUser_dict = {"status": status}
+            db.Update('user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
+
             create_user_wallet = UserWallet.createWallet(_user_id)
 
             # generating jwt for user sessions
@@ -53,13 +93,15 @@ class User:
             },
                 application.config['SECRET_KEY'])
 
-            response = user_created_response(100, "User created successfully", _user_id, token)
-
+            response = user_created_response(100, "user created successfully", _user_id, token)
             return response
+
         except Exception as e:
             print(e)
-            response = make_response(403, "Invalid data types")
-            return response
+            return make_response(403, str(e))
+            
+
+         
 
     @staticmethod
     @token_required
@@ -69,11 +111,15 @@ class User:
             _userId = _json['user_id']
             _first_name = _json['first_name']
             _last_name = _json['last_name']
+            _password = _json['password']
             _phone_number = _json['phone_number']
             _email = _json['email']
             _profile_pic = _json['profile_pic']
 
-            updateUser_dict = {"first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "profile_pic": _profile_pic}
+            # hash password
+            hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
+
+            updateUser_dict = {"first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": hash_password, "profile_pic": _profile_pic}
 
             db.Update('user', "user_id  =  '" + str(_userId) + "'", **updateUser_dict)
 
@@ -95,12 +141,14 @@ class User:
             _email = _json['email']
             _password = _json['password']
 
-            check_user = get_user_details(_email, _password)
+            # hash password
+            hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
+
+            check_user = get_user_details(_email, hash_password)
 
             if len(check_user) <= 0:
-                data = make_response(403, "failed to log in")
+                data = make_response(403, "Invalid User")
                 return data
-
             token = jwt.encode({
                 'email': _email,
                 'expiration': str(datetime.now() + timedelta(seconds=120))
@@ -112,7 +160,7 @@ class User:
         
         except Exception as e:
             print(e)
-            data = make_response(403, "failed to login user !!!")
+            data = make_response(403, str(e))
             return data
 
     # delete user
@@ -123,6 +171,8 @@ class User:
             _user_id = _json['user_id']
             sql = "DELETE FROM `user` WHERE user_id = '" + str(_user_id) + "' "
             db.delete(sql)
+            sql_wallet = "DELETE FROM `user_wallet` WHERE user_id = '" + str(_user_id) + "' "
+            db.delete(sql_wallet)
             response = make_response(100, "user deleted successfully")
             return response
 
@@ -183,4 +233,10 @@ def user_created_response(status, message, userId, Token):
 # user logged in response
 def user_logged_response(status, message, data, Token):
     return jsonify({"message": message, "data": data, "status": status, "token": Token})
+
+# get user by email
+def get_user_by_email(email):
+    sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
+    data = db.select(sql)
+    return data
 
