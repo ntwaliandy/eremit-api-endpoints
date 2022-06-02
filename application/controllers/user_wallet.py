@@ -4,6 +4,13 @@ from application.models.user_wallet import UserWallet
 bp_app = Blueprint('mod_wallet', __name__)
 
 
+# create other wallets
+@bp_app.route('/create_other_wallet', methods=['POST'])
+def createOtherWallet():
+    data = UserWallet.otherWallets()
+    return data
+
+
 # delete a wallet
 @bp_app.route('/user_delete_wallet', methods=['DELETE'])
 def delete_wallet():

@@ -1,3 +1,4 @@
+from urllib import response
 import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
@@ -16,15 +17,9 @@ class UserWallet:
             _wallet_id = uuid.uuid4()
             _user_id = userId
             _balance = 0
-            _currency_id = "UGX"
-            check_user = get_user_details(userId)
+            _currency_code = "USD"
 
-            if len(check_user) > 0:
-                response = make_response(403, "user already exists")
-                print(check_user)
-                return response
-
-            addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_id": _currency_id, "wallet_id": _wallet_id}
+            addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
             data = db.insert('user_wallet', **addWallet_dict)
 
             return _wallet_id
@@ -32,6 +27,44 @@ class UserWallet:
             print(e)
             response = make_response(403, str(e))
             return response
+
+    
+    # CREATE OTHER WALLETS
+    def otherWallets():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            _currency_code = _json['currency_code']
+            balance = 0.0
+            _wallet_id = uuid.uuid4()
+
+            # check if user exists
+            check_user = get_user_details(_user_id)
+            if len(check_user) <= 0:
+                response = make_response(403, "invalid user")
+                return response
+
+            # check user wallet if it already exists
+            check_wallet = get_user_details(_user_id)
+            check_wallet_currency_code = check_wallet[0]['currency_code']
+            if _currency_code == check_wallet_currency_code:
+                response = make_response(403, "wallet type already exits")
+                return response
+
+            other_wallet_dict = {"user_id": _user_id, "wallet_id": _wallet_id, "balance": balance, "currency_code": _currency_code}
+
+            db.insert('user_wallet', **other_wallet_dict)
+
+            response = make_response(100, "New Wallet created successfully")
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to create a new wallet")
+            return response
+
+            
+            
+    
 
     # delete a wallet
     def deleteWallet():
