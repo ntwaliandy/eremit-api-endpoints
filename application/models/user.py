@@ -1,6 +1,5 @@
 import hashlib
 from random import randint
-from urllib import response
 import jwt
 from datetime import datetime, timedelta
 from application import application
@@ -85,6 +84,7 @@ class User:
             db.Update('user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
 
             create_user_wallet = UserWallet.createWallet(_user_id)
+            userData = get_user_details_by_id(_user_id)
 
             # generating jwt for user sessions
             token = jwt.encode({
@@ -93,7 +93,7 @@ class User:
             },
                 application.config['SECRET_KEY'])
 
-            response = user_created_response(100, "user created successfully", _user_id, token)
+            response = user_created_response(100, "user created successfully", userData, token)
             return response
 
         except Exception as e:
@@ -146,6 +146,8 @@ class User:
 
             check_user = get_user_details(_email, hash_password)
 
+            Userdata = get_mod_userdetail(_email, _password)
+
             if len(check_user) <= 0:
                 data = make_response(403, "Invalid User")
                 return data
@@ -154,7 +156,7 @@ class User:
                 'expiration': str(datetime.now() + timedelta(seconds=120))
             },
                 application.config['SECRET_KEY'])
-            response = user_logged_response(100, "user loggedin successfully", check_user, token)
+            response = user_logged_response(100, "user loggedin successfully", Userdata, token)
             
             return response
         
@@ -190,6 +192,7 @@ class User:
             _user_id = _json['user_id']
 
             data = get_user_details_by_id(_user_id)
+            
             if len(data) <= 0:
                 response = make_response(403, "No such user")
                 return response
@@ -223,7 +226,18 @@ def get_user_detail(Email, Phone_number):
 # get user details by id
 def get_user_details_by_id(userId):
     sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
-    data = db.select(sql)
+    result = db.select(sql)
+    data = [
+        {
+            "first_name": result[0]['first_name'], 
+            "last_name": result[0]['last_name'], 
+            "email": result[0]['email'],
+            "phone_number": result[0]['phone_number'],
+            "user_id": result[0]['user_id'],
+            "status": result[0]['status'],
+            "date_time": result[0]['date_time']
+        }
+        ]
     return data
 
 # user created response
@@ -238,5 +252,22 @@ def user_logged_response(status, message, data, Token):
 def get_user_by_email(email):
     sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
     data = db.select(sql)
+    return data
+
+# get user data without password, otp
+def get_mod_userdetail(Email, Phone_number):
+    sql = "SELECT * FROM `user` WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
+    result = db.select(sql)
+    data = [
+        {
+            "first_name": result[0]['first_name'], 
+            "last_name": result[0]['last_name'], 
+            "email": result[0]['email'],
+            "phone_number": result[0]['phone_number'],
+            "user_id": result[0]['user_id'],
+            "status": result[0]['status'],
+            "date_time": result[0]['date_time']
+        }
+        ]
     return data
 

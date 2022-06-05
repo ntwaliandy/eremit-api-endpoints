@@ -4,7 +4,7 @@ from application.models.transaction import Transaction
 bp_app = Blueprint('mod_transaction', __name__)
 
 # create transaction
-@bp_app.route('/user_create_transaction', methods=['POST'])
+@bp_app.route('/send', methods=['POST'])
 def create_transaction():
     data = Transaction.createTransaction()
     return data

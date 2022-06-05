@@ -130,3 +130,4 @@ def get_user_details(userId):
     sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' "
     data = db.select(sql)
     return data
+
