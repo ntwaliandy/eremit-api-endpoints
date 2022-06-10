@@ -89,7 +89,7 @@ class User:
             # generating jwt for user sessions
             token = jwt.encode({
                 'email': _email,
-                'expiration': str(datetime.now() + timedelta(seconds=120))
+                'expiration': str(datetime.now() + timedelta(hours=24))
             },
                 application.config['SECRET_KEY'])
 
@@ -98,7 +98,7 @@ class User:
 
         except Exception as e:
             print(e)
-            return make_response(403, str(e))
+            return make_response(403, "can't register a user")
             
 
          
@@ -145,15 +145,19 @@ class User:
             hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
 
             check_user = get_user_details(_email, hash_password)
-
-            Userdata = get_mod_userdetail(_email, _password)
+            userId = check_user[0]['user_id']
+            status = check_user[0]['status']
+            Userdata = get_user_details_by_id(userId)
 
             if len(check_user) <= 0:
                 data = make_response(403, "Invalid User")
                 return data
+            if status != 'Active':
+                response = make_response(403, "can't log the user in")
+                return response
             token = jwt.encode({
                 'email': _email,
-                'expiration': str(datetime.now() + timedelta(seconds=120))
+                'expiration': str(datetime.now() + timedelta(hours=23))
             },
                 application.config['SECRET_KEY'])
             response = user_logged_response(100, "user loggedin successfully", Userdata, token)
@@ -162,7 +166,8 @@ class User:
         
         except Exception as e:
             print(e)
-            data = make_response(403, str(e))
+            print(check_user)
+            data = make_response(403, "can't login in")
             return data
 
     # delete user

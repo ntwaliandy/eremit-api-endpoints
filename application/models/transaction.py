@@ -60,7 +60,7 @@ class Transaction:
 
         except Exception as e:
             print(e)
-            response = make_response(403, str(e))
+            response = make_response(403, "can't make a transaction")
             return response
 
     # display all wallets
@@ -95,7 +95,7 @@ class Transaction:
 
         except Exception as e:
             print(e)
-            response = make_response(403, "technical error")
+            response = make_response(403, "can't pull all the transactions of the user.")
             return response
 
 # responses
