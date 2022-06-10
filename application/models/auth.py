@@ -1,4 +1,5 @@
 from functools import wraps
+from urllib import response
 from flask import jsonify, request
 import jwt
 from application import application
@@ -7,10 +8,11 @@ from datetime import datetime
 def token_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
-        data = request.headers['Authorization']
+        data = request.headers.get('Authorization')
         token = str.replace(str(data), 'Bearer ', '')
+        # print(data)
         # print(token)
-        if not token:
+        if data == None:
             return jsonify({'Alert!': 'Token missing'})
         
         try:
@@ -19,6 +21,12 @@ def token_required(func):
                 return jsonify({"status": "token expired"})
         except Exception as e:
             print(e)
-            return jsonify({"Error": str(e)})
+            response = make_response(403, "failed to decode the token")
+            return response
         return func(*args, **kwargs)
     return decorated
+
+
+def make_response(status, message):
+    data = jsonify({"status": status, "message": message})
+    return data
