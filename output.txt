@@ -1,1 +1,1 @@
-UPDATE user_wallet SET balance=%s WHERE wallet_id = '08cd3595-4063-4175-8f79-ddcf41b349a7'
+UPDATE user SET status=%s WHERE user_id  =  '4576eae4-596f-4460-b221-a4f67a883b84'

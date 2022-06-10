@@ -71,6 +71,11 @@ class UserWallet:
         try:
             _json = request.json
             _wallet_id = _json['wallet_id']
+            check_wallet = get_user_wallet_details(_wallet_id)
+            balance = check_wallet[0]['balance']
+            if balance > 0:
+                response = make_response(403, "can't delete wallet with certain amount")
+                return response
             sql = "DELETE FROM `user_wallet` WHERE wallet_id = '" + _wallet_id + "' "
             db.delete(sql)
             response = make_response(100, "wallet deleted successfully")
@@ -128,6 +133,12 @@ def make_response(status, message):
 # get user details basing on e-wallet
 def get_user_details(userId):
     sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' "
+    data = db.select(sql)
+    return data
+
+# get wallet details basing on wallet id
+def get_user_wallet_details(walletId):
+    sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + str(walletId) + "' "
     data = db.select(sql)
     return data
 
