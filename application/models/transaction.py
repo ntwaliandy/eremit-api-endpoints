@@ -108,6 +108,6 @@ def get_walletDetailsBy_walletId(walletId):
     return data
 #getting all transactions for a specific wallet id
 def get_transactions_details(walletId):
-    sql = "SELECT * FROM `transaction` WHERE wallet_id = '" + walletId + "' "
+    sql = "SELECT * FROM `transaction` WHERE from_account = '" + walletId + "' OR to_account = '" + walletId + "' "
     data = db.select(sql)
     return data
