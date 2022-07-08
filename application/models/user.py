@@ -18,7 +18,6 @@ class User:
         print('user model')
 
     @staticmethod
-    @token_required
     def all_users():
         sql = "SELECT * FROM `user` "
         data = db.select(sql)
