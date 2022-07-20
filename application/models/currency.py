@@ -26,7 +26,7 @@ class Currency:
             
             currency_dict = {"currency_id": _currency_id, "currency_name": _currency_name, "currency_code": _currency_code}
 
-            data = db.insert('currencies', **currency_dict)
+            data = db().insert('currencies', **currency_dict)
             response = make_response(100, "currency created successfully")
             return response
 
@@ -40,7 +40,7 @@ class Currency:
     @token_required
     def allCurrencies():
         sql = "SELECT * FROM currencies"
-        data = db.select(sql)
+        data = db().select(sql)
         return jsonify(data)
 
     # delete a currency
@@ -51,7 +51,7 @@ class Currency:
             _json = request.json
             _currencyId = _json['currency_id']
             sql = "DELETE FROM `currencies` WHERE currency_id = '" + str(_currencyId) + "' "
-            db.delete(sql)
+            db().delete(sql)
             response = make_response(100, "currency deleted successfully")
             return response
         except Exception as e:
@@ -67,5 +67,5 @@ def make_response(status, message):
 # currency details basing on code and name
 def get_currency_details(Currency_name, Currency_code):
     sql = "SELECT * FROM `currencies` WHERE currency_code = '" + Currency_code + "' OR currency_name = '" + Currency_name + "' "
-    data = db.select(sql)
+    data = db().select(sql)
     return data

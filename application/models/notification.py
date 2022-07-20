@@ -16,7 +16,7 @@ class Notification:
             _message = _json['message']
 
             addNotification_dic = {"notification_id": _notification_id, "message": _message}
-            data = db.insert('notification', **addNotification_dic)
+            data = db().insert('notification', **addNotification_dic)
 
             response = make_response(100, "Notification created successfully!!")
             return response
@@ -31,7 +31,7 @@ class Notification:
     def getNotifications():
         try:
             sql = "SELECT * FROM `notification` "
-            data = db.select(sql)
+            data = db().select(sql)
             return jsonify(data)
 
         except Exception as e:

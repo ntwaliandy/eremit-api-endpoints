@@ -20,7 +20,7 @@ class UserWallet:
             _currency_code = "USD"
 
             addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
-            data = db.insert('user_wallet', **addWallet_dict)
+            data = db().insert('user_wallet', **addWallet_dict)
 
             return _wallet_id
         except Exception as e:
@@ -30,6 +30,7 @@ class UserWallet:
 
     
     # CREATE OTHER WALLETS
+    @token_required
     def otherWallets():
         try:
             _json = request.json
@@ -53,7 +54,7 @@ class UserWallet:
 
             other_wallet_dict = {"user_id": _user_id, "wallet_id": _wallet_id, "balance": balance, "currency_code": _currency_code}
 
-            db.insert('user_wallet', **other_wallet_dict)
+            db().insert('user_wallet', **other_wallet_dict)
 
             response = make_response(100, "New Wallet created successfully")
             return response
@@ -67,6 +68,7 @@ class UserWallet:
     
 
     # delete a wallet
+    @token_required
     def deleteWallet():
         try:
             _json = request.json
@@ -77,7 +79,7 @@ class UserWallet:
                 response = make_response(403, "can't delete wallet with certain amount")
                 return response
             sql = "DELETE FROM `user_wallet` WHERE wallet_id = '" + _wallet_id + "' "
-            db.delete(sql)
+            db().delete(sql)
             response = make_response(100, "wallet deleted successfully")
             return response
 
@@ -92,7 +94,7 @@ class UserWallet:
     def allWallets():
         try:
             sql = "SELECT * FROM `user_wallet` "
-            data = db.select(sql)
+            data = db().select(sql)
             return jsonify(data)
 
         except Exception as e:
@@ -133,12 +135,12 @@ def make_response(status, message):
 # get user details basing on e-wallet
 def get_user_details(userId):
     sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' "
-    data = db.select(sql)
+    data = db().select(sql)
     return data
 
 # get wallet details basing on wallet id
 def get_user_wallet_details(walletId):
     sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + str(walletId) + "' "
-    data = db.select(sql)
+    data = db().select(sql)
     return data
 

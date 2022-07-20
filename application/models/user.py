@@ -20,7 +20,7 @@ class User:
     @staticmethod
     def all_users():
         sql = "SELECT * FROM `user` "
-        data = db.select(sql)
+        data = db().select(sql)
         return jsonify(data)
 
 
@@ -48,10 +48,15 @@ class User:
             otp_generated = randint(0000,9999)
             status = 'pending'
             otp_sent = send(otp_generated, _email)
+            print("start")
             addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "status": status}
-            data = db.insert('user', **addUser_dict)
+            print(addUser_dict)
+            data = db().insert('user', **addUser_dict)
+            print(data)
+
             
             response = make_response(100, otp_sent)
+            print(response)
 
             return response
         except Exception as e:
@@ -80,7 +85,7 @@ class User:
             _user_id = check_user[0]['user_id']
 
             updatedUser_dict = {"status": status}
-            db.Update('user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
 
             create_user_wallet = UserWallet.createWallet(_user_id)
             userData = get_user_details_by_id(_user_id)
@@ -110,17 +115,13 @@ class User:
             _userId = _json['user_id']
             _first_name = _json['first_name']
             _last_name = _json['last_name']
-            _password = _json['password']
             _phone_number = _json['phone_number']
             _email = _json['email']
-            _profile_pic = _json['profile_pic']
 
-            # hash password
-            hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
 
-            updateUser_dict = {"first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": hash_password, "profile_pic": _profile_pic}
+            updateUser_dict = {"first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email}
 
-            db.Update('user', "user_id  =  '" + str(_userId) + "'", **updateUser_dict)
+            db().Update('user', "user_id  =  '" + str(_userId) + "'", **updateUser_dict)
 
             response = make_response(100, "user updated successfully")
 
@@ -130,7 +131,45 @@ class User:
             print(e)
             response = make_response(403, "failed to update user")
             return response
-    
+
+    # update user password
+    @staticmethod
+    @token_required
+    def passwordUpdate():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            _current_password = _json['current_password']
+            _new_password = _json['new_password']
+            _confirm_new_password = _json['confirm_new_password']
+
+            # hash current password
+            hash_current_password = hashlib.sha256(str(_current_password).encode('utf-8')).hexdigest()
+
+            check_user_details = get_user_details_by_id_and_password(_user_id, hash_current_password)
+            if len(check_user_details) <= 0:
+                response = make_response(403, "invalid credentials")
+                return response
+
+            if _new_password != _confirm_new_password:
+                response = make_response(403, "Password Mismatch")
+                return response
+            
+            hash_new_password = hashlib.sha256(str(_new_password).encode('utf-8')).hexdigest()
+
+            UpdateUser_dict = {"password": hash_new_password}
+
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **UpdateUser_dict)
+
+            response = make_response(100, "password updated successfully")
+            return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "Failed to update password")
+            return response
+
+
 
     # login user
     @staticmethod
@@ -176,9 +215,9 @@ class User:
             _json = request.json
             _user_id = _json['user_id']
             sql = "DELETE FROM `user` WHERE user_id = '" + str(_user_id) + "' "
-            db.delete(sql)
+            db().delete(sql)
             sql_wallet = "DELETE FROM `user_wallet` WHERE user_id = '" + str(_user_id) + "' "
-            db.delete(sql_wallet)
+            db().delete(sql_wallet)
             response = make_response(100, "user deleted successfully")
             return response
 
@@ -218,19 +257,26 @@ def make_response(status, message):
 # user details
 def get_user_details(Email, Password):
     sql = "SELECT * FROM `user` WHERE email = '" + Email + "' AND password = '" + Password + "' "
-    data = db.select(sql)
+    data = db().select(sql)
     return data
 
 # user details based on register model
 def get_user_detail(Email, Phone_number):
     sql = "SELECT * FROM `user` WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
-    data = db.select(sql)
+    data = db().select(sql)
+    return data
+
+
+# user details based on id and current password
+def get_user_details_by_id_and_password(UserId, CurrentPassword):
+    sql = "SELECT * FROM `user` WHERE user_id = '" + UserId + "' AND password = '" + CurrentPassword + "' "
+    data = db().select(sql)
     return data
 
 # get user details by id
 def get_user_details_by_id(userId):
     sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
-    result = db.select(sql)
+    result = db().select(sql)
     data = [
         {
             "first_name": result[0]['first_name'], 
@@ -245,8 +291,8 @@ def get_user_details_by_id(userId):
     return data
 
 # user created response
-def user_created_response(status, message, userId, Token):
-    return jsonify({"user_id": userId, "status": status, "message": message, "token": Token})
+def user_created_response(status, message, data, Token):
+    return jsonify({"data": data, "status": status, "message": message, "token": Token})
 
 # user logged in response
 def user_logged_response(status, message, data, Token):
@@ -255,13 +301,13 @@ def user_logged_response(status, message, data, Token):
 # get user by email
 def get_user_by_email(email):
     sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
-    data = db.select(sql)
+    data = db().select(sql)
     return data
 
 # get user data without password, otp
 def get_mod_userdetail(Email, Phone_number):
     sql = "SELECT * FROM `user` WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
-    result = db.select(sql)
+    result = db().select(sql)
     data = [
         {
             "first_name": result[0]['first_name'], 

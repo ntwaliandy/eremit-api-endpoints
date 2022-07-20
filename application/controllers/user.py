@@ -20,6 +20,12 @@ def update_user():
     data = User.userUpdate()
     return data
 
+# update user password
+@bp_app.route('/update_user_password', methods=['PUT'])
+def update_user_password():
+    data = User.passwordUpdate()
+    return data
+
 # login a user
 @bp_app.route('/login_user', methods=['POST'])
 def login_user():

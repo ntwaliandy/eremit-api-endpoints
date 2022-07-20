@@ -1,45 +1,47 @@
 from flask import request, jsonify
-import pymysql
 from config import DB_CONFIG as conf
-
-DB = pymysql.connect(host=conf['host'], port=conf['port'], user=conf['username'], passwd=conf['password'],
-                     db=conf['db'], autocommit=True, cursorclass=pymysql.cursors.DictCursor)
-conn = DB.cursor()
-
+from application import mysql
 
 class Database:
     def __init__(self):
-        self.conn = conn
+        self.conn = mysql.connection.cursor()
 
-    @staticmethod
-    def select(query):
-        conn.execute(query)
-        rows = conn.fetchall()
+    
+    def select(self, query):
+        self.conn.execute(query)
+        rows = self.conn.fetchall()
         return rows
 
-    @staticmethod
-    def delete(query):
-        conn.execute(query)
+    
+    def delete(self, query):
+        self.conn.execute(query)
+        mysql.connection.commit()
+        self.conn.close()
         return True
 
-    @staticmethod
-    def insert(table_name, **data):
+    
+    def insert(self, table_name, **data):
         keys = ', '.join(['%s'] * len(data))
         columns = ', '.join(data.keys())
         values = tuple(data.values())
         sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % (table_name, columns, keys)
-        conn.execute(sql, values)
-        last_id = conn.lastrowid
+        print(sql)
+        self.conn.execute(sql, values)
+        mysql.connection.commit()
+        self.conn.close()
+        last_id = self.conn.lastrowid
         return last_id
 
-    @staticmethod
-    def Update(table, where, **d):
+    
+    def Update(self, table, where, **d):
         sql = 'UPDATE ' + table + ' SET {}'.format(', '.join('{}=%s'.format(k) for k in d))
         sql = sql + ' WHERE ' + where
         write_to_file(sql)
         values = tuple(d.values())
-        conn.execute(sql, values)
-        last_id = conn.lastrowid
+        self.conn.execute(sql, values)
+        mysql.connection.commit()
+        self.conn.close()
+        last_id = self.conn.lastrowid
         return last_id
 
 

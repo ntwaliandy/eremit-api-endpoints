@@ -13,12 +13,12 @@ def token_required(func):
         # print(data)
         # print(token)
         if data == None:
-            return jsonify({'Alert!': 'Token missing'})
+            return jsonify({'status': '403', 'message': 'Token missing'})
         
         try:
             data = jwt.decode(token, application.config['SECRET_KEY'], algorithms=['HS256'])
             if data['expiration'] < str(datetime.now()):
-                return jsonify({"status": "token expired"})
+                return jsonify({"status":"403", "message": "login please"})
         except Exception as e:
             print(e)
             response = make_response(403, "failed to decode the token")

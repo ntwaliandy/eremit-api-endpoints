@@ -44,17 +44,17 @@ class Transaction:
 
             _from_net_balance = check_from_balance - _amount
             fromupdate_dict = {"balance": _from_net_balance}
-            db.Update('user_wallet', "wallet_id = '" + str(_from_account) + "'", **fromupdate_dict)
+            db().Update('user_wallet', "wallet_id = '" + str(_from_account) + "'", **fromupdate_dict)
 
             _to_net_balance = check_to_user[0]['balance'] + _amount
             toupdate_dict = {"balance": _to_net_balance}
-            db.Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
+            db().Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
 
             
 
             _status = "success"
             create_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "status": _status}
-            data = db.insert('transaction', **create_transaction_dict)
+            data = db().insert('transaction', **create_transaction_dict)
             response = make_response(100, "transaction statement created")
             return response
 
@@ -69,7 +69,7 @@ class Transaction:
     def allTransactions():
         try:
             sql = "SELECT * FROM `transaction` "
-            data = db.select(sql)
+            data = db().select(sql)
             return jsonify(data)
 
         except Exception as e:
@@ -104,10 +104,10 @@ def make_response(status, message):
 
 def get_walletDetailsBy_walletId(walletId):
     sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + walletId + "' "
-    data = db.select(sql)
+    data = db().select(sql)
     return data
 #getting all transactions for a specific wallet id
 def get_transactions_details(walletId):
     sql = "SELECT * FROM `transaction` WHERE from_account = '" + walletId + "' OR to_account = '" + walletId + "' "
-    data = db.select(sql)
+    data = db().select(sql)
     return data
