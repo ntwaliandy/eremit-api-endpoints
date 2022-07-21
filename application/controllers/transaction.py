@@ -18,3 +18,8 @@ def all_transactions():
 def transaction_base_on_wallet():
     data = Transaction.allCurrencyWallet()
     return data
+
+@bp_app.route('/verify_currency', methods=['POST'])
+def verifyCurrency():
+    data = Transaction.VerifyCurrency()
+    return data

@@ -25,7 +25,6 @@ class Database:
         columns = ', '.join(data.keys())
         values = tuple(data.values())
         sql = "INSERT INTO %s ( %s ) VALUES ( %s )" % (table_name, columns, keys)
-        print(sql)
         self.conn.execute(sql, values)
         mysql.connection.commit()
         self.conn.close()

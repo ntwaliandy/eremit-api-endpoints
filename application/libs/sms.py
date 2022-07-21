@@ -1,5 +1,6 @@
 from flask_mail import Mail, Message
 from application import application
+from flask import jsonify
 
 application.config['MAIL_SERVER'] = 'smtp.gmail.com'
 application.config['MAIL_PORT'] = 465
@@ -15,3 +16,9 @@ def send(OTP, RECEIVER):
     msg.body = " the otp sent is " + str(OTP) + ". Comfirm it ASAP!!!"
     mail.send(msg)
     return "otp sent to " + RECEIVER + " successfully"
+
+def statusMessage(Email, message):
+    msg = Message('EREMIT LTD', sender = 'ntwaliandy90@gmail.com', recipients = [Email])
+    msg.body = message
+    mail.send(msg)
+    return jsonify({"status": 100, "message": "message successfully sent to both accounts."})

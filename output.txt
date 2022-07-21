@@ -1,1 +1,1 @@
-UPDATE user SET first_name=%s, last_name=%s, phone_number=%s, email=%s WHERE user_id  =  '51e8c599-ca73-4c89-86f9-bea0f3999ce0'
+UPDATE user_wallet SET balance=%s WHERE wallet_id = '33d9beaf-b001-4ab2-854c-ca4184c2b916'
