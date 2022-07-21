@@ -46,9 +46,8 @@ class UserWallet:
                 return response
 
             # check user wallet if it already exists
-            check_wallet = get_user_details(_user_id)
-            check_wallet_currency_code = check_wallet[0]['currency_code']
-            if _currency_code == check_wallet_currency_code:
+            check_wallet = check_user_currency(_user_id, _currency_code)
+            if len(check_wallet) > 0:
                 response = make_response(403, "wallet type already exits")
                 return response
 
@@ -135,6 +134,12 @@ def make_response(status, message):
 # get user details basing on e-wallet
 def get_user_details(userId):
     sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' "
+    data = db().select(sql)
+    return data
+
+# get user details basing on e-wallet currency
+def check_user_currency(userId, currrency_code):
+    sql = "SELECT * FROM `user_Wallet` WHERE user_id = '" + userId + "' AND currency_code = '" + currrency_code + "' "
     data = db().select(sql)
     return data
 
