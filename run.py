@@ -13,4 +13,4 @@ application.register_blueprint(currency_mod)
 application.register_blueprint(notification_mod)
 cors = CORS(application)
 
-application.run(port=2525, host="0.0.0.0", debug=True)
+application.run(port=9000, host="0.0.0.0", debug=True)

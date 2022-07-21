@@ -128,6 +128,7 @@ class Transaction:
     def VerifyCurrency():
         try:
             json = request.json
+            _sender_id = json['sender_id']
             _currency_code = json['currency_code']
             _receiver_phonenumber = json['receiver_phonenumber']
             _amount = json['amount']
@@ -147,13 +148,15 @@ class Transaction:
 
             # checking receiver wallet deatils
             check_reciever_wallets = get_wallet_details(receiver_id, _currency_code)
+            check_sender_wallets = get_wallet_details(_sender_id, _currency_code)
             if len(check_reciever_wallets) <= 0:
                 response = make_response(403, "receiver doesn't have " + _currency_code + " wallet")
                 return response
             
             # receiver wallet_id
             receiver_wallet_id = check_reciever_wallets[0]['wallet_id']
-            response = make_response(100, receiver_wallet_id)
+            sender_wallet_id = check_sender_wallets[0]['wallet_id']
+            response = make_response(100, {"sender_walletId": sender_wallet_id, "receiver_walletId": receiver_wallet_id})
             return response
         except Exception as e:
             print(e)
