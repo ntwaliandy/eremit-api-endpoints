@@ -139,7 +139,7 @@ def get_user_details(userId):
 
 # get user details basing on e-wallet currency
 def check_user_currency(userId, currrency_code):
-    sql = "SELECT * FROM `user_Wallet` WHERE user_id = '" + userId + "' AND currency_code = '" + currrency_code + "' "
+    sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + userId + "' AND currency_code = '" + currrency_code + "' "
     data = db().select(sql)
     return data
 
