@@ -71,7 +71,7 @@ def forgot_password():
 def password_otp():
     data = User.passwordOtp()
     return data
-# new password setting
+# new password setting (iranks)
 @bp_app.route('/setting_password', methods=['PUT'])
 def setting_password():
     data = User.settingPassword()
