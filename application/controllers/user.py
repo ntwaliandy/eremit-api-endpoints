@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify, json
 from application.models.user import User
 
@@ -51,4 +52,27 @@ def get_user_by_id():
 @bp_app.route('/verify_otp', methods=['POST'])
 def verify_otp():
     data = User.verifyOTP()
+    return data
+
+# get user details by email(iranks)
+@bp_app.route('/get_user_by_email', methods=['POST'])
+def get_user_details_by_email():
+    data = User.getUserDetailsByEmail()
+    return data
+
+# forgot password(iranks)
+@bp_app.route('/forgot_password', methods=['POST'])
+def forgot_password():
+    data = User.forgotPassword()
+    return data
+
+# password otp(iranks)
+@bp_app.route('/password_otp', methods=['POST'])
+def password_otp():
+    data = User.passwordOtp()
+    return data
+# new password setting
+@bp_app.route('/setting_password', methods=['PUT'])
+def setting_password():
+    data = User.settingPassword()
     return data
