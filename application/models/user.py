@@ -1,5 +1,7 @@
 import hashlib
+from operator import methodcaller
 from random import randint
+from unittest import result
 import jwt
 from datetime import datetime, timedelta
 from application import application
@@ -168,9 +170,104 @@ class User:
             print(e)
             response = make_response(403, "Failed to update password")
             return response
+    
 
+    #forgot password(iranks)
+    @staticmethod
+    def forgotPassword():
+        try:
+            _json = request.json
+            
+            _email = _json['email']
 
+            check_user = get_user_by_email(_email)
+            if len(check_user) <= 0:
+                response = make_response(403, "Wrong Email")
+                return response
+            otp_generated = randint(0000,9999)
+            status = 'pending'
+            _user_id = check_user[0]['user_id']
+            otp_sent = send(otp_generated, _email)
+            updateUser_dict = { "email": _email,  "otp": otp_generated, "status": status}
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            
 
+            
+            response = make_response(100, "otp sent successfully")
+            print(response)
+
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failure to send otp")
+            return response
+
+    #verify otp forgot password(iranks)
+    @staticmethod
+    def passwordOtp():
+        try:
+            _json = request.json
+            _email = _json['email']
+            _otp = _json['otp']
+            check_usr_exist = get_user_by_email_and_otp(_email, _otp)
+
+            if len(check_usr_exist) <= 0:
+                response = make_response(403, "Wrong One Time Password")
+                return response
+            
+            status = 'change'
+            _user_id = check_usr_exist[0]['user_id']
+
+            updateUser_dict = {"status": status}
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            response = make_response(100, "OTP verified successfully")
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "Invalid OTP")
+            return response
+    
+    #new password (iranks)
+    @staticmethod
+    def settingPassword():
+        try:
+            _json = request.json
+        
+            _email = _json['email']
+            _new_password = _json['new_password']
+            _confirm_new_password = _json['confirm_new_password']
+
+            if _new_password != _confirm_new_password:
+                response = make_response(403, "Password Mismatch")
+                return response
+            hash_new_password = hashlib.sha256(str(_new_password).encode('utf-8')).hexdigest()
+            
+
+            check_user = get_user_by_email(_email)
+            status = check_user[0]['status']
+            
+            if len(check_user) <= 0:
+                response = make_response(403, "email doesnt exist")
+                return response
+            if status != 'change':
+                response = make_response(403, "can't change password first verify your email")
+                return response
+
+            status = 'Active'
+            _user_id = check_user[0]['user_id']
+            UpdateUser_dict = { "password": hash_new_password, "status": status}
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **UpdateUser_dict)
+
+            response = make_response(100, "password updated successfully")
+            return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "Failed to change  password")
+            return response
+
+           
+ 
     # login user
     @staticmethod
     def loginUser():
@@ -247,6 +344,27 @@ class User:
             response = make_response(403, "failed to pull user with specific ID")
             return response
 
+    # get user detials by email(iranks)
+    @staticmethod
+    @token_required
+    def getUserDetailsByEmail():
+        try:
+            _json = request.json
+            _email = _json['email']
+
+            data = get_user_details_by_email(_email)
+            
+            if len(data) <= 0:
+                response = make_response(403, "No such user")
+                return response
+
+            response = jsonify(data)
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to pull user with specific email")
+            return response
+
             
 
 
@@ -273,6 +391,27 @@ def get_user_details_by_id_and_password(UserId, CurrentPassword):
     data = db().select(sql)
     return data
 
+#user details based on id and email (iranks)    
+def get_user_details_by_id_and_email(UserId, email):
+    sql = "SELECT * FROM `user` WHERE user_id = '" + UserId + "' AND email = '" + email + "' "
+    data = db().select(sql)
+    return data
+
+#user details based 0on email an otp(iranks)
+def get_user_by_email_and_otp(email, otp):
+    sql = "SELECT * FROM `user` WHERE email = '" + email + "' AND otp = '" + otp + "' "
+    data = db().select(sql)
+    return data
+
+    
+
+# user details based on id and status(iranks)
+def get_user_details_by_id_and_status(UserId, status):
+    sql = "SELECT * FROM `user` WHERE user_id = '" + UserId + "' AND status = '" + status + "' "
+    data = db().select(sql)
+    return data
+
+
 # get user details by id
 def get_user_details_by_id(userId):
     sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
@@ -298,9 +437,32 @@ def user_created_response(status, message, data, Token):
 def user_logged_response(status, message, data, Token):
     return jsonify({"message": message, "data": data, "status": status, "token": Token})
 
-# get user by email
+# get user by email(iranks)
+def get_user_details_by_email(email):
+    sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
+    result = db().select(sql)
+    data = [
+        {
+            "first_name": result[0]['first_name'], 
+            "last_name": result[0]['last_name'], 
+            "email": result[0]['email'],
+            "phone_number": result[0]['phone_number'],
+            "user_id": result[0]['user_id'],
+            "status": result[0]['status'],
+            "date_time": result[0]['date_time']
+        }
+        ]
+    return data
+
+    # get user by email
 def get_user_by_email(email):
     sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
+    data = db().select(sql)
+    return data
+
+    # get user by otp(iranks)
+def get_user_by_otp(otp):
+    sql = "SELECT * FROM `user` WHERE otp = '" + str(otp) + "' "
     data = db().select(sql)
     return data
 
