@@ -1,1 +1,1 @@
-UPDATE user_wallet SET balance=%s WHERE wallet_id = '33d9beaf-b001-4ab2-854c-ca4184c2b916'
+UPDATE user_wallet SET balance=%s WHERE wallet_id = '3fbf795d-8704-4cb1-9f0a-dd8d41e07fda'
