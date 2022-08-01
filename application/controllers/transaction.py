@@ -23,3 +23,8 @@ def transaction_base_on_wallet():
 def verifyCurrency():
     data = Transaction.VerifyCurrency()
     return data
+
+@bp_app.route('/user_transactions', methods=['POST'],)
+def user_transactions():
+    data = Transaction.userTransactions()
+    return data
