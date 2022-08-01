@@ -4,6 +4,8 @@ from flask import jsonify, request
 from helper.dbhelper import Database as db
 from application.models.auth import token_required
 from application.libs.sms import statusMessage
+import requests
+from python_flutterwave import payment
 
 
 class Transaction:
@@ -164,6 +166,82 @@ class Transaction:
             print(e)
             response = make_response(403, "can't make this transaction")
             return response
+
+    # depositing to or from MM
+    def deposit():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            _currency = _json['currency']
+            _phoneNumber = _json['phone_number']
+            _amount = _json['amount']
+            _transType = _json['trans_type']
+
+            if _amount <= 0:
+                response = make_response(403, "less amount transfer")
+                return response
+
+            if _transType == 'To_MM':
+                check_wallet = get_wallet_details(_user_id, _currency)
+                if len(check_wallet) <= 0:
+                    response = make_response(403, "Wallet doesn't Exists")
+                    return response
+                walletId = check_wallet[0]['wallet_id']
+                wallet_amount = check_wallet[0]['balance']
+                
+                if wallet_amount <= _amount:
+                    response = make_response(403, "Not enough funds to withdraw")
+                    return response
+
+                latest_amount = wallet_amount - _amount
+                updatedWallet_dict = {"balance": latest_amount}
+
+                db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+
+                response = make_response(100, "You have successfully withdrawn " + str(_amount) + " " + _currency)
+                return response
+
+            elif _transType == 'From_MM':
+                check_wallet = get_wallet_details(_user_id, _currency)
+                if len(check_wallet) <= 0:
+                    response = make_response(403, "Wallet doesn't Exists")
+                    return response
+                walletId = check_wallet[0]['wallet_id']
+                wallet_amount = check_wallet[0]['balance']
+
+                url = 'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda'
+                token = 'FLWSECK-96a7c8ce9629c7c698bd0528f184c65f-X'
+                hed = {'Authorization': 'Bearer ' + token}
+                data = {
+                    "phone_number": '0775555464',
+                    "network": "MTN",
+                    "amount": 500,
+                    "currency": 'UGX',
+                    "email": 'ntwaliandy90@gmail.com',
+                    "tx_ref": "rfx11223344",
+                }
+
+                result = requests.post(url, json=data, headers=hed)
+                res = result.json()
+                print(res)
+
+
+                latest_amount = wallet_amount + _amount
+                updatedWallet_dict = {"balance": latest_amount}
+
+                db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+
+                # response = make_response(100, "You have successfully deposited " + str(_amount) + " " + _currency)
+                response = make_response(100, res)
+                return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to make the transaction")
+            return response
+            
+
+
 
 
             
