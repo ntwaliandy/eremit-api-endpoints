@@ -1,6 +1,9 @@
+from datetime import datetime
+from urllib import response
 import pymysql
 import uuid
 from flask import jsonify, request
+from application.controllers.user_wallet import wallet_details
 from helper.dbhelper import Database as db
 from application.models.auth import token_required
 from application.libs.sms import statusMessage
@@ -128,7 +131,24 @@ class Transaction:
             print(e)
             response = make_response(403, "can't pull all the transactions of the user.")
             return response
-    
+
+
+    #gettng all user transactions basing on user id
+    @staticmethod
+    @token_required
+    def userTransactions():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            
+            check_wallets = get_user_wallets(_user_id)
+            response = make_response(100, check_wallets)
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "cant see transactions basing on id")
+            return response    
+    #verifyng currency
     def VerifyCurrency():
         try:
             json = request.json
@@ -275,5 +295,16 @@ def check_user_by_id(userId):
 # getting user wallet details
 def get_wallet_details(userId, currency):
     sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' AND currency_code = '" + currency + "' "
+    data = db().select(sql)
+    return data
+
+#check user walllets basing on user_id(iranks)
+def get_user_wallets(userId):
+    sql = "SELECT transaction.from_account, transaction.to_account, transaction.status, transaction.id, transaction.date_time, transaction.amount, user_wallet.user_id FROM transaction INNER JOIN user_wallet ON (transaction.from_account=user_wallet.wallet_id OR transaction.to_account=user_wallet.wallet_id) AND user_wallet.user_id= '" + str(userId) + "'"
+    data = db().select(sql)
+    return data
+#check user transaction basing on time stamp(iranks)
+def get_transaction_time(dateTime):
+    sql = "SELECT * FROM `transaction` WHERE date_time = '" + str(dateTime) + "' "
     data = db().select(sql)
     return data

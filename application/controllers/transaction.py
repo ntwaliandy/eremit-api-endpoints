@@ -28,3 +28,8 @@ def verifyCurrency():
 def userDeposit():
     data = Transaction.deposit()
     return data
+    
+@bp_app.route('/user_transactions', methods=['POST'],)
+def user_transactions():
+    data = Transaction.userTransactions()
+    return data
