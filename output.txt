@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 UPDATE user_wallet SET balance=%s WHERE wallet_id = '0b2c5a53-4626-4f33-95e2-08d072766e58'
+=======
+UPDATE user_wallet SET balance=%s WHERE wallet_id = '3fbf795d-8704-4cb1-9f0a-dd8d41e07fda'
+>>>>>>> 0047460a54debb5609473e580621f4d93c7017af

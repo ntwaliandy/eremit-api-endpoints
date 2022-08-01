@@ -24,6 +24,7 @@ class Transaction:
             _to_account = _json['to_account']
             _transaction_type = _json['trans_type']
             _amount = _json['amount']
+            _reason = _json['reason']
 
             _statusFrom = "credit"
             _statusTo = "debit"
@@ -64,13 +65,13 @@ class Transaction:
             check_to_personal_account = check_user_by_id(to_userId)
             to_email = check_to_personal_account[0]['email']
             to_first_name = check_to_personal_account[0]['first_name']
-            to_last_name = check_from_personal_account[0]['last_name']
+            to_last_name = check_to_personal_account[0]['last_name']
 
             _from_net_balance = check_from_balance - _amount
             fromupdate_dict = {"balance": _from_net_balance}
             db().Update('user_wallet', "wallet_id = '" + str(_from_account) + "'", **fromupdate_dict)
             
-            create_from_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "status": _statusFrom}
+            create_from_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusFrom}
             db().insert('transaction', **create_from_transaction_dict)
 
 
@@ -78,9 +79,10 @@ class Transaction:
             toupdate_dict = {"balance": _to_net_balance}
             db().Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
 
-            create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "status": _statusTo}
+            create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusTo}
             db().insert('transaction', **create_to_transaction_dict)
-
+            
+            print(to_last_name)
             send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
 
             send_from_mail = statusMessage(to_email, "You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
