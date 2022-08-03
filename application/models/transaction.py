@@ -1,12 +1,15 @@
 from datetime import datetime
 from urllib import response
+import os
 import pymysql
 import uuid
-from flask import jsonify, request
+from flask import jsonify, request, json, redirect
 from application.controllers.user_wallet import wallet_details
 from helper.dbhelper import Database as db
 from application.models.auth import token_required
 from application.libs.sms import statusMessage
+import requests
+
 
 
 class Transaction:
@@ -185,6 +188,120 @@ class Transaction:
             response = make_response(403, "can't make this transaction")
             return response
 
+    # depositing to or from MM
+    def deposit():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            _currency = _json['currency']
+            _phoneNumber = _json['phone_number']
+            _amount = _json['amount']
+            _transType = _json['trans_type']
+
+            if _amount <= 0:
+                response = make_response(403, "less amount transfer")
+                return response
+
+            if _transType == 'To_MM':
+                check_wallet = get_wallet_details(_user_id, _currency)
+                if len(check_wallet) <= 0:
+                    response = make_response(403, "Wallet doesn't Exists")
+                    return response
+                walletId = check_wallet[0]['wallet_id']
+                wallet_amount = check_wallet[0]['balance']
+                
+                if wallet_amount <= _amount:
+                    response = make_response(403, "Not enough funds to withdraw")
+                    return response
+
+                latest_amount = wallet_amount - _amount
+                updatedWallet_dict = {"balance": latest_amount}
+
+                db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+
+                response = make_response(100, "You have successfully withdrawn " + str(_amount) + " " + _currency)
+                return response
+
+            elif _transType == 'From_MM':
+                check_wallet = get_wallet_details(_user_id, _currency)
+                if len(check_wallet) <= 0:
+                    response = make_response(403, "Wallet doesn't Exists")
+                    return response
+                walletId = check_wallet[0]['wallet_id']
+                wallet_amount = check_wallet[0]['balance']
+
+                url = 'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda'
+                token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
+                hed = {'Authorization': 'Bearer ' + token}
+                data = {
+                    "phone_number": _phoneNumber,
+                    "network": "MTN",
+                    "amount": _amount,
+                    "fullname": "irankunda innocent",
+                    "currency": _currency,
+                    "email": 'ntwaliandy90@gmail.com',
+                    "tx_ref": "tx" + str(111223),
+                    "redirect_url": "http://18.116.9.199:9000/webhook",
+                    "meta": {
+                        "user_id": _user_id,
+                        "wallet_id": walletId
+                    }
+                }
+
+                result = requests.post(url, json=data, headers=hed)
+                res = result.json()
+                print(res)
+
+                # response = make_response(100, "You have successfully deposited " + str(_amount) + " " + _currency)
+                response = make_response(100, res)
+                return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to make the transaction")
+            return response
+
+    
+    # webhooks
+    def webHooks():
+        data = 'hey Andy'
+        payload = request.args.to_dict()
+        resp = payload['resp']
+        res = json.loads(resp)
+        if res['status'] == 'success':
+            get_email = res['data']['customer.email']
+            print(get_email)
+            check_user = check_user_by_email(get_email)
+            if len(check_user) <= 0:
+                response = make_response(403, "Wrong Email")
+                return response
+            
+            _user_id = check_user[0]['user_id']
+            _currency = res['data']['currency']
+            _amount = res['data']['amount']
+            get_userWallet = get_wallet_details(_user_id, _currency)
+            if len(get_userWallet) <= 0:
+                response = make_response(403, "invalid wallet")
+                return response
+            _walletId = get_userWallet[0]['wallet_id']
+            _currentBalance = get_userWallet[0]['balance']
+            _newBalance = _currentBalance + _amount
+
+            transDict = {"transaction_id": uuid.uuid4(), "from_account": "MM_UGANDA", "to_account": _walletId, "amount": _amount, "status": "debit", "trans_type": "mm_to_wallet", "reason": "deposited"}
+            db().insert('transaction', **transDict)
+
+
+            updatedWallet_dict = {"balance": _newBalance}
+            db().Update("user_wallet", "wallet_id = '" + str(_walletId) + "'", **updatedWallet_dict)
+            return redirect('http://18.116.9.199/eremit')
+        elif res['status'] == 'error':
+            data = 'Wrong transaction or link expired'
+            return data
+        return data
+            
+
+
+
 
             
 
@@ -211,6 +328,12 @@ def check_user_by_phonenumber(phone):
 # getting user by user_id
 def check_user_by_id(userId):
     sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
+    data = db().select(sql)
+    return 
+    
+# getting user by email
+def check_user_by_email(email):
+    sql = "SELECT * FROM `user` WHERE email = '" + email + "' "
     data = db().select(sql)
     return data
 
