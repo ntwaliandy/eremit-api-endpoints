@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify, json
+from flask import Blueprint, request, jsonify, json, redirect, url_for
 from application.models.transaction import Transaction
+from flask import Response
 
 bp_app = Blueprint('mod_transaction', __name__)
 
@@ -29,7 +30,12 @@ def userDeposit():
     data = Transaction.deposit()
     return data
     
-@bp_app.route('/user_transactions', methods=['POST'],)
+@bp_app.route('/user_transactions', methods=['POST'])
 def user_transactions():
     data = Transaction.userTransactions()
+    return data
+
+@bp_app.route('/webhook', methods=['GET'])
+def webhook():
+    data = Transaction.webHooks()
     return data
