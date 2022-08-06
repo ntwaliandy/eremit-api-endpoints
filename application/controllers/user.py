@@ -33,6 +33,12 @@ def login_user():
     data = User.loginUser()
     return data
 
+# verfying loginOTP
+@bp_app.route('/login_otp', methods=['POST'])
+def login_otp():
+    data = User.loginOtp()
+    return data
+
 # delete a user
 @bp_app.route('/delete_user', methods=['DELETE'])
 def delete_user():

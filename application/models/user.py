@@ -36,14 +36,12 @@ class User:
             _phone_number = _json['phone_number']
             _email = _json['email']
             _password = _json['password']
-            _profile_pic = _json['profile_pic']
+            _profile_pic = 'null'
+            
+            print(_phone_number)
             # hash password
             hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
-            phoneNumber = phonenumbers.parse(_phone_number)
-            check_phoneNumber = phonenumbers.is_possible_number(phoneNumber)
             check_user = get_user_detail(_email, _phone_number)
-            if check_phoneNumber == False:
-                return make_response(403, "Invalid phone number")
             if len(check_user) > 0:
                 return make_response(403, "User Already Exists")
             
@@ -108,7 +106,7 @@ class User:
             
 
          
-
+    
     @staticmethod
     @token_required
     def userUpdate():
@@ -280,30 +278,64 @@ class User:
             hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
 
             check_user = get_user_details(_email, hash_password)
-            userId = check_user[0]['user_id']
-            status = check_user[0]['status']
-            Userdata = get_user_details_by_id(userId)
+            print(check_user)
 
             if len(check_user) <= 0:
                 data = make_response(403, "Invalid User")
                 return data
-            if status != 'Active':
-                response = make_response(403, "can't log the user in")
+
+            #sending otp while logging in
+            otp_generated = randint(0000,9999)
+            status = 'pending'
+            _user_id = check_user[0]['user_id']
+            otp_sent = send(otp_generated, _email)
+            print(otp_sent)
+            updateUser_dict = { "otp": otp_generated, "status": status}
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            response = make_response(100, "otp sent successfully to your email")
+            
+            return response
+
+        except Exception as e:
+            print(e)
+            data = make_response(403, "can't send otp to user")
+            return data
+
+        #verifying otp for login
+    @staticmethod
+    def loginOtp():
+        try:
+            _json = request.json
+            _email = _json['email']
+            _otp = _json['otp']
+            
+            check_usr_exist = get_user_by_email_and_otp(_email, _otp)
+            
+
+            if len(check_usr_exist) <= 0:
+                response = make_response(403, "Wrong otp")
                 return response
+            userId = check_usr_exist[0]['user_id']
+            Userdata = get_user_details_by_id(userId)
+            
+            status = 'active'
+            _user_id = check_usr_exist[0]['user_id']
+
+            updateUser_dict = {"status": status}
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            
             token = jwt.encode({
-                'email': _email,
+                'email': _email, 
                 'expiration': str(datetime.now() + timedelta(hours=23))
             },
                 application.config['SECRET_KEY'])
             response = user_logged_response(100, "user loggedin successfully", Userdata, token)
-            
             return response
-        
+            
         except Exception as e:
             print(e)
-            print(check_user)
-            data = make_response(403, "can't login in")
-            return data
+            response = make_response(403, "Invalid OTP for login")
+            return response
 
     # delete user
     @token_required

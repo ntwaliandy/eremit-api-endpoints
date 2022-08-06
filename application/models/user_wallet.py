@@ -16,7 +16,7 @@ class UserWallet:
 
             _wallet_id = uuid.uuid4()
             _user_id = userId
-            _balance = 10000
+            _balance = 0
             _currency_code = "USD"
 
             addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
