@@ -9,7 +9,7 @@ from helper.dbhelper import Database as db
 from application.models.auth import token_required
 from application.libs.sms import statusMessage
 import requests
-from rave_python import Rave, RaveExceptions, Misc
+from random import randint
 
 
 class Transaction:
@@ -198,6 +198,10 @@ class Transaction:
             _amount = _json['amount']
             _transType = _json['trans_type']
 
+            
+
+            tx = randint(000000, 999999)
+
             if _amount <= 0:
                 response = make_response(403, "less amount transfer")
                 return response
@@ -223,6 +227,11 @@ class Transaction:
                 return response
 
             elif _transType == 'From_MM':
+                checkUser = check_user_by_id(_user_id)
+                firstName = checkUser[0]['first_name']
+                print(firstName)
+                email = checkUser[0]['email']
+                print(email)
                 check_wallet = get_wallet_details(_user_id, _currency)
                 if len(check_wallet) <= 0:
                     response = make_response(403, "Wallet doesn't Exists")
@@ -237,10 +246,10 @@ class Transaction:
                     "phone_number": _phoneNumber,
                     "network": "MTN",
                     "amount": _amount,
-                    "fullname": "irankunda innocent",
+                    "fullname": str(firstName),
                     "currency": _currency,
-                    "email": 'ntwaliandy90@gmail.com',
-                    "tx_ref": "tx" + str(111223),
+                    "email": str(email),
+                    "tx_ref": str(tx),
                     "redirect_url": "http://18.116.9.199:9000/webhook",
                     "meta": {
                         "user_id": _user_id,
@@ -293,7 +302,9 @@ class Transaction:
 
             updatedWallet_dict = {"balance": _newBalance}
             db().Update("user_wallet", "wallet_id = '" + str(_walletId) + "'", **updatedWallet_dict)
-            return redirect('http://18.116.9.199/eremit')
+
+            emaiSent = statusMessage(get_email, "You have successfuly Deposited " + str(_amount) + _currency + " to your " + " " + _currency + " WALLET")
+            return redirect('http://18.116.9.199/eremit/#/dashboard')
         elif res['status'] == 'error':
             data = 'Wrong transaction or link expired'
             return data
@@ -329,7 +340,7 @@ def check_user_by_phonenumber(phone):
 def check_user_by_id(userId):
     sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
     data = db().select(sql)
-    return 
+    return data
     
 # getting user by email
 def check_user_by_email(email):
