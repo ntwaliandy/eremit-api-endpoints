@@ -34,6 +34,7 @@ class User:
             _first_name = _json['first_name']
             _last_name = _json['last_name']
             _phone_number = _json['phone_number']
+            _username = _json['username']
             _email = _json['email']
             _password = _json['password']
             _profile_pic = 'null'
@@ -45,6 +46,10 @@ class User:
             if len(check_user) > 0:
                 return make_response(403, "User Already Exists")
             
+            check_username = get_user_by_username(_username)
+            if len(check_username) > 0:
+                return make_response(403, "Username Already Exists")
+                
             otp_generated = randint(0000,9999)
             status = 'pending'
             otp_sent = send(otp_generated, _email)
@@ -453,6 +458,7 @@ def get_user_details_by_id(userId):
             "first_name": result[0]['first_name'], 
             "last_name": result[0]['last_name'], 
             "email": result[0]['email'],
+            "username": result[0]['username'],
             "phone_number": result[0]['phone_number'],
             "user_id": result[0]['user_id'],
             "status": result[0]['status'],
@@ -478,6 +484,7 @@ def get_user_details_by_email(email):
             "first_name": result[0]['first_name'], 
             "last_name": result[0]['last_name'], 
             "email": result[0]['email'],
+            "username": result[0]['username'],
             "phone_number": result[0]['phone_number'],
             "user_id": result[0]['user_id'],
             "status": result[0]['status'],
@@ -489,6 +496,12 @@ def get_user_details_by_email(email):
     # get user by email
 def get_user_by_email(email):
     sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
+    data = db().select(sql)
+    return data
+
+    # get user by username
+def get_user_by_username(username):
+    sql = "SELECT * FROM `user` WHERE username = '" + str(username) + "' "
     data = db().select(sql)
     return data
 
@@ -507,6 +520,7 @@ def get_mod_userdetail(Email, Phone_number):
             "first_name": result[0]['first_name'], 
             "last_name": result[0]['last_name'], 
             "email": result[0]['email'],
+            "username": result[0]['username'],
             "phone_number": result[0]['phone_number'],
             "user_id": result[0]['user_id'],
             "status": result[0]['status'],

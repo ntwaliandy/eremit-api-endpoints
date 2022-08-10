@@ -154,7 +154,7 @@ class Transaction:
             json = request.json
             _sender_id = json['sender_id']
             _currency_code = json['currency_code']
-            _receiver_phonenumber = json['receiver_phonenumber']
+            _username = json['username']
             _amount = json['amount']
 
             # checking amount
@@ -162,8 +162,8 @@ class Transaction:
                 response = make_response(403, "less amount to transfer")
                 return response
                 
-            # check user by phone number
-            check_reciever = check_user_by_phonenumber(_receiver_phonenumber)
+            # check user by username
+            check_reciever = check_user_by_username(_username)
             if len(check_reciever) <= 0:
                 response = make_response(403, "receiver account doesn't Exist")
                 return response
@@ -449,9 +449,9 @@ def get_transactions_details(walletId):
     data = db().select(sql)
     return data
 
-# getting user by phone number
-def check_user_by_phonenumber(phone):
-    sql = "SELECT * FROM `user` WHERE phone_number = '" + phone + "' "
+# getting user by username
+def check_user_by_username(Username):
+    sql = "SELECT * FROM `user` WHERE username = '" + str(Username) + "' "
     data = db().select(sql)
     return data
 
@@ -475,7 +475,7 @@ def get_wallet_details(userId, currency):
 
 #check user walllets basing on user_id(iranks)
 def get_user_wallets(userId):
-    sql = "SELECT transaction.from_account, transaction.to_account, transaction.status, transaction.id, transaction.reason, transaction.date_time, transaction.amount, user_wallet.user_id, user_wallet.currency_code FROM transaction INNER JOIN user_wallet ON (transaction.from_account=user_wallet.wallet_id OR transaction.to_account=user_wallet.wallet_id) AND user_wallet.user_id= '" + str(userId) + "'"
+    sql = "SELECT transaction.from_account, transaction.to_account, transaction.status, transaction.id, transaction.transaction_id, transaction.reason, transaction.date_time, transaction.amount, user_wallet.user_id, user_wallet.currency_code FROM transaction INNER JOIN user_wallet ON (transaction.from_account=user_wallet.wallet_id OR transaction.to_account=user_wallet.wallet_id) AND user_wallet.user_id= '" + str(userId) + "'"
     data = db().select(sql)
     return data
 #check user transaction basing on time stamp(iranks)
