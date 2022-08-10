@@ -1,5 +1,1 @@
-<<<<<<< HEAD
-UPDATE user SET status=%s WHERE user_id  =  '25d3dfaf-1d2d-40d6-b205-2e7d6c8be54f'
-=======
 UPDATE user_wallet SET balance=%s WHERE wallet_id = 'e6e71ba5-60f4-4302-8eed-05b11841274f'
->>>>>>> 74761fe9a5a9e3289cbc974208d4a2c91e2ed1b2
