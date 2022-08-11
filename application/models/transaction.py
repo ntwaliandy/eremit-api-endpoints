@@ -25,6 +25,7 @@ class Transaction:
             _from_account = _json['from_account']
             _to_account = _json['to_account']
             _transaction_type = _json['trans_type']
+            _receiver_money = _json['receiver_money']
             _amount = _json['amount']
             _reason = _json['reason']
 
@@ -51,10 +52,6 @@ class Transaction:
                 response = make_response(403, "Not enough funds to make this transaction")
                 return response
 
-            if check_from_user[0]['currency_code'] != check_to_user[0]['currency_code']:
-                response = make_response(403, "receiver doesn't use same currency as yours!")
-                return response
-
             from_userId = check_from_user[0]['user_id']
             from_currency = check_from_user[0]['currency_code']
             check_from_personal_account = check_user_by_id(from_userId)
@@ -77,17 +74,17 @@ class Transaction:
             db().insert('transaction', **create_from_transaction_dict)
 
 
-            _to_net_balance = check_to_user[0]['balance'] + _amount
+            _to_net_balance = check_to_user[0]['balance'] + _receiver_money
             toupdate_dict = {"balance": _to_net_balance}
             db().Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
 
-            create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusTo}
+            create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _receiver_money, "reason": _reason, "status": _statusTo}
             db().insert('transaction', **create_to_transaction_dict)
             
             print(to_last_name)
             send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
 
-            send_from_mail = statusMessage(to_email, "You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
+            send_from_mail = statusMessage(to_email, "You have successfully received " + str(_receiver_money) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
 
             response = make_response(100, "transaction statement created")
             return response
@@ -151,11 +148,12 @@ class Transaction:
     #verifyng currency
     def VerifyCurrency():
         try:
-            json = request.json
-            _sender_id = json['sender_id']
-            _currency_code = json['currency_code']
-            _username = json['username']
-            _amount = json['amount']
+            _json = request.json
+            _sender_id = _json['sender_id']
+            _currency_code = _json['currency_code']
+            _receiver_currency_code = _json['receiver_currency_code']
+            _username = _json['username']
+            _amount = _json['amount']
 
             # checking amount
             if _amount <= 0:
@@ -171,16 +169,30 @@ class Transaction:
             receiver_id = check_reciever[0]['user_id']
 
             # checking receiver wallet deatils
-            check_reciever_wallets = get_wallet_details(receiver_id, _currency_code)
+            check_reciever_wallets = get_wallet_details(receiver_id, _receiver_currency_code)
             check_sender_wallets = get_wallet_details(_sender_id, _currency_code)
             if len(check_reciever_wallets) <= 0:
-                response = make_response(403, "receiver doesn't have " + _currency_code + " wallet")
+                response = make_response(403, "receiver doesn't have " + _receiver_currency_code + " wallet")
                 return response
+
+            to = _receiver_currency_code
+            from_wallet = _currency_code
+            url = "https://api.apilayer.com/exchangerates_data/convert?to=" + str(to) + "&from=" + str(from_wallet) + "&amount=" + str(_amount) + ""
+            payload = {}
+            headers= {
+            "apikey": "o7cVMzxBZSiBYsiRtK6Od8H6zFzieYGV"
+            }
+            response = requests.get(url, headers=headers, data = payload)
+            result = response.text
+            res = json.loads(result)
+
+            _receiving_money = res['result']
+            
             
             # receiver wallet_id
             receiver_wallet_id = check_reciever_wallets[0]['wallet_id']
             sender_wallet_id = check_sender_wallets[0]['wallet_id']
-            response = make_response(100, {"sender_walletId": sender_wallet_id, "receiver_walletId": receiver_wallet_id})
+            response = make_response(100, {"sender_walletId": sender_wallet_id, "receiver_walletId": receiver_wallet_id, "receiving_money": _receiving_money})
             return response
         except Exception as e:
             print(e)
@@ -203,9 +215,6 @@ class Transaction:
 
 
             if _transType == 'To_MM':
-                if _amount <= 4999:
-                    response = make_response(403, "less amount transfer")
-                    return response
                 checkUser = check_user_by_id(_user_id)
                 firstName = checkUser[0]['first_name']
                 lastName = checkUser[0]['last_name']
@@ -359,7 +368,7 @@ class Transaction:
                 wallet_amount = check_wallet[0]['balance']
 
                 url = 'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda'
-                token = 'FLWSECK_TEST-a57d7c686c273440df398c4758985179-X'
+                token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
                 hed = {'Authorization': 'Bearer ' + token}
                 data = {
                     "phone_number": _phoneNumber,
@@ -392,7 +401,7 @@ class Transaction:
     
     # webhooks
     def webHooks():
-        data = 'hey Andy'
+        data = 'Unexpected Error occurred'
         payload = request.args.to_dict()
         resp = payload['resp']
         res = json.loads(resp)
@@ -428,9 +437,6 @@ class Transaction:
             data = 'Wrong transaction or link expired'
             return data
         return data
-            
-
-
 
 
             
