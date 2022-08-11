@@ -54,7 +54,7 @@ class User:
             status = 'pending'
             otp_sent = send(otp_generated, _email)
             print("start")
-            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "status": status}
+            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "status": status}
             print(addUser_dict)
             data = db().insert('user', **addUser_dict)
             print(data)
