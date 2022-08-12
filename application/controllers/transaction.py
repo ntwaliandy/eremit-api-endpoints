@@ -29,6 +29,11 @@ def verifyCurrency():
 def userDeposit():
     data = Transaction.deposit()
     return data
+
+@bp_app.route('/deposit-rwanda', methods=['POST'])
+def userRwandaDeposit():
+    data = Transaction.depositRwanda()
+    return data
     
 @bp_app.route('/user_transactions', methods=['POST'])
 def user_transactions():

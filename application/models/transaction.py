@@ -199,7 +199,7 @@ class Transaction:
             response = make_response(403, "can't make this transaction")
             return response
 
-    # depositing to or from MM
+    # depositing to or from MM_UGANDA
     def deposit():
         try:
             _json = request.json
@@ -368,6 +368,204 @@ class Transaction:
                 wallet_amount = check_wallet[0]['balance']
 
                 url = 'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda'
+                token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
+                hed = {'Authorization': 'Bearer ' + token}
+                data = {
+                    "phone_number": _phoneNumber,
+                    "network": "MTN",
+                    "amount": _amount,
+                    "fullname": str(firstName) + " " + str(lastName),
+                    "currency": _currency,
+                    "email": str(email),
+                    "tx_ref": str(tx),
+                    "redirect_url": "http://18.116.9.199:9000/webhook",
+                    "meta": {
+                        "user_id": _user_id,
+                        "wallet_id": walletId
+                    }
+                }
+
+                result = requests.post(url, json=data, headers=hed)
+                res = result.json()
+                print(res)
+
+                # response = make_response(100, "You have successfully deposited " + str(_amount) + " " + _currency)
+                response = make_response(100, res)
+                return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "slow network")
+            return response
+
+    
+    # depositing to or from MM_RWANDA
+    def depositRwanda():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            _currency = _json['currency']
+            _phoneNumber = _json['phone_number']
+            _amount = _json['amount']
+            _transType = _json['trans_type']
+
+            
+
+            tx = randint(000000, 999999)
+
+
+            if _transType == 'To_MM':
+                checkUser = check_user_by_id(_user_id)
+                firstName = checkUser[0]['first_name']
+                lastName = checkUser[0]['last_name']
+                print(firstName)
+                email = checkUser[0]['email']
+                print(email)
+                check_wallet = get_wallet_details(_user_id, _currency)
+                if len(check_wallet) <= 0:
+                    response = make_response(403, "Wallet doesn't Exists")
+                    return response
+                walletId = check_wallet[0]['wallet_id']
+                wallet_amount = check_wallet[0]['balance']
+                url = 'https://api.flutterwave.com/v3/transfers/fee?currency=' + _currency + '&amount= ' + str(_amount) + '&type=mobilemoney'
+                token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
+                hed = {'Authorization': 'Bearer ' + token}
+                result = requests.get(url, headers=hed)
+                res = result.json()
+                print(res)
+
+                if _amount < 125000:
+                    trans_fee = res['data'][0]['fee']
+                    print(trans_fee)
+
+                    sys_fee = 0.02 * _amount
+
+                    totalCharge = trans_fee + sys_fee + _amount
+                    print(totalCharge)
+                    if totalCharge > wallet_amount:
+                        response = make_response(403, "You don't have enough money to withdraw")
+                        return response
+
+                    url = 'https://api.flutterwave.com/v3/transfers'
+                    token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
+                    hed = {'Authorization': 'Bearer ' + token}
+                    data = {
+                        "account_bank": "MPS",
+                        "account_number": str(_phoneNumber),
+                        "amount": _amount,
+                        "narration": "RWF MOMO TRANSFER",
+                        "currency": _currency,
+                        "reference": str(tx),
+                        "beneficiary_name": firstName + ' ' + lastName
+                    }
+                    resultInit = requests.post(url, json=data, headers=hed)
+                    resInit = resultInit.json()
+                    print(resInit)
+
+                    if resInit['status'] == 'success':
+                        print('yesss')
+                        process_data = resInit['data']['id']
+                        url = 'https://api.flutterwave.com/v3/transfers/' + str(process_data)
+                        token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
+                        hed = {'Authorization': 'Bearer ' + token}
+                        trans_status = requests.get(url, headers=hed)
+                        trans_res = trans_status.json()
+                        print(trans_res)
+                        if len(trans_res) <= 0:
+                            response = make_response(403, "can't process the transafer right now")
+                            return response
+
+                        if trans_res['data']['status'] != 'SUCCESSFUL':
+                            response = make_response(403, "failed to pull the transaction details. fallBack Action")
+                            return response
+                        
+                        latest_amount = wallet_amount - totalCharge
+                        updatedWallet_dict = {"balance": latest_amount}
+
+                        db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+                        trans_id = uuid.uuid4()
+                        trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
+                        db().insert('transaction', **trans_dict)
+                        statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
+
+                        response = make_response(100, str(_amount) + " " + _currency + " transferred successfully")
+                        return response
+
+
+                elif _amount >= 125000:
+                    trans_fee = res['data'][0]['fee']
+
+                    sys_fee = 0.02 * _amount
+
+                    totalCharge = trans_fee + sys_fee + _amount
+                    if totalCharge > wallet_amount:
+                        response = make_response(403, "You don't have enough money to withdraw")
+                        return response
+
+                    url = 'https://api.flutterwave.com/v3/transfers'
+                    token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
+                    hed = {'Authorization': 'Bearer ' + token}
+                    data = {
+                        "account_bank": "MPS",
+                        "account_number": str(_phoneNumber),
+                        "amount": _amount,
+                        "narration": "RWF MOMO TRANSFER",
+                        "currency": _currency,
+                        "reference": str(tx),
+                        "beneficiary_name": firstName + ' ' + lastName
+                    }
+                    resultInit = requests.post(url, json=data, headers=hed)
+                    resInit = resultInit.json()
+                    print(resInit)
+
+                    if resInit['status'] == 'success':
+                        print('yesss')
+                        process_data = resInit['data']['id']
+                        url = 'https://api.flutterwave.com/v3/transfers/' + str(process_data)
+                        token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
+                        hed = {'Authorization': 'Bearer ' + token}
+                        trans_status = requests.get(url, headers=hed)
+                        trans_res = trans_status.json()
+                        print(trans_res)
+                        if len(trans_res) <= 0:
+                            response = make_response(403, "can't process the transafer right now")
+                            return response
+
+                        if trans_res['data']['status'] != 'SUCCESSFUL':
+                            response = make_response(403, "failed to pull the transaction details. fallBack Action")
+                            return response
+                        
+                        latest_amount = wallet_amount - totalCharge
+                        updatedWallet_dict = {"balance": latest_amount}
+
+                        db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+                        trans_id = uuid.uuid4()
+                        trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
+                        db().insert('transaction', **trans_dict)
+                        statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
+
+                        response = make_response(100, str(_amount) + " " + _currency + " transferred successfully")
+                        return response
+                    
+
+            elif _transType == 'From_MM':
+                if _amount <= 999:
+                    response = make_response(403, "less amount transfer")
+                    return response
+                checkUser = check_user_by_id(_user_id)
+                firstName = checkUser[0]['first_name']
+                lastName = checkUser[0]['last_name']
+                print(firstName)
+                email = checkUser[0]['email']
+                print(email)
+                check_wallet = get_wallet_details(_user_id, _currency)
+                if len(check_wallet) <= 0:
+                    response = make_response(403, "Wallet doesn't Exists")
+                    return response
+                walletId = check_wallet[0]['wallet_id']
+                wallet_amount = check_wallet[0]['balance']
+
+                url = 'https://api.flutterwave.com/v3/charges?type=mobile_money_rwanda'
                 token = 'FLWSECK-dd838ce5bf5cc79bd08b897660f00b14-X'
                 hed = {'Authorization': 'Bearer ' + token}
                 data = {
