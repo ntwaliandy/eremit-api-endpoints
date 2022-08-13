@@ -40,6 +40,11 @@ def user_transactions():
     data = Transaction.userTransactions()
     return data
 
+@bp_app.route('/deposit-card', methods=['POST'])
+def userCardDeposit():
+    data = Transaction.depositCard()
+    return data
+
 @bp_app.route('/webhook', methods=['GET'])
 def webhook():
     data = Transaction.webHooks()
