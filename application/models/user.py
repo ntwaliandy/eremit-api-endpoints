@@ -111,7 +111,7 @@ class User:
             
 
          
-    
+    #update user
     @staticmethod
     @token_required
     def userUpdate():
@@ -402,7 +402,95 @@ class User:
             response = make_response(403, "failed to pull user with specific email")
             return response
 
+    #get user details by username(iranks)
+    @staticmethod
+    @token_required
+    def getUserDetailsByUsername():
+        try:
+            _json = request.json
+            _username = _json['username']
+
+            data = get_user_by_username(_username)
             
+            if len(data) <= 0:
+                response = make_response(403, "No such user with this username")
+                return response
+
+            response = jsonify(data)
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to pull user with this username")
+            return response
+
+    #save user contacts(iranks)
+    @staticmethod
+    @token_required
+    def saveContact():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            
+            _first_name = _json['first_name']
+            _last_name = _json['last_name']
+            _phone_number = _json['phone_number']
+            _username = _json['username']
+            _email = _json['email']
+            saveContact_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username}
+            print(saveContact_dict)
+            data = db().insert('saved_contacts', **saveContact_dict)
+            print(data)
+
+            
+            response = make_response(100, "user contact saved succcesfully")
+            print(response)
+
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "Invalid data types in saving contact")
+            return response
+
+    #get saved contacts by user_id(iranks)
+    @staticmethod
+    @token_required
+    def getSavedContactsByUserId():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+
+            data = get_saved_contacts_by_user_id(_user_id)
+            
+            if len(data) <= 0:
+                response = make_response(403, "No saved contacts with this user id")
+                return response
+
+            response = jsonify(data)
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to pull saved contacts with this id")
+            return response
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # responses
@@ -499,6 +587,8 @@ def get_user_by_email(email):
     data = db().select(sql)
     return data
 
+
+
     # get user by username
 def get_user_by_username(username):
     sql = "SELECT * FROM `user` WHERE username = '" + str(username) + "' "
@@ -528,4 +618,11 @@ def get_mod_userdetail(Email, Phone_number):
         }
         ]
     return data
+
+      # get saved contact by  user_id(iranks)
+def get_saved_contacts_by_user_id(user_id):
+    sql = "SELECT * FROM `saved_contacts` WHERE user_id = '" + str(user_id) + "' "
+    data = db().select(sql)
+    return data
+
 
