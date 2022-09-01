@@ -90,7 +90,7 @@ def get_user_details_by_username():
     return data
 
 #save user contacts (iranks)
-@bp_app.route('/saving_contacts', methods=['POST'])
+@bp_app.route('/saving_contacts', methods=['PUT'])
 def saveContact():
     data = User.saveContact()
     return data
@@ -99,4 +99,10 @@ def saveContact():
 @bp_app.route('/saved_contacts', methods=['POST'])
 def get_saved_contacts_by_user_id():
     data = User.getSavedContactsByUserId()
+    return data
+
+#deleting saved contact(iranks)
+@bp_app.route('/delete_contact', methods=['POST'])
+def delete_contact():
+    data = User.deleteContact()
     return data
