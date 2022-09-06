@@ -82,3 +82,27 @@ def password_otp():
 def setting_password():
     data = User.settingPassword()
     return data
+
+# get user details by username (iranks)
+@bp_app.route('/user_by_username', methods=['POST'])
+def get_user_details_by_username():
+    data = User.getUserDetailsByUsername()
+    return data
+
+#save user contacts (iranks)
+@bp_app.route('/saving_contacts', methods=['PUT'])
+def saveContact():
+    data = User.saveContact()
+    return data
+
+#get saved contacts by user id (iranks)
+@bp_app.route('/saved_contacts', methods=['POST'])
+def get_saved_contacts_by_user_id():
+    data = User.getSavedContactsByUserId()
+    return data
+
+#deleting saved contact(iranks)
+@bp_app.route('/delete_contact', methods=['POST'])
+def delete_contact():
+    data = User.deleteContact()
+    return data

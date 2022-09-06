@@ -111,7 +111,7 @@ class User:
             
 
          
-    
+    #update user
     @staticmethod
     @token_required
     def userUpdate():
@@ -360,6 +360,7 @@ class User:
             response = make_response(403, "failed to delete a user")
             return response
 
+
     # get user details by id
     @staticmethod
     @token_required
@@ -402,7 +403,113 @@ class User:
             response = make_response(403, "failed to pull user with specific email")
             return response
 
+
+    #save user contacts(iranks)
+    @staticmethod
+    @token_required
+    def saveContact():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+            _username = _json['username']
             
+            check_saved = get_user_contacts(_user_id, _username)
+            if len(check_saved) > 0:
+                return make_response(403, "Username Already Exists in your favourites")
+            data= get_user_by_username(_username)
+            if len(data) <= 0:
+                response = make_response(403, "wrong username")
+                return response
+            response = data
+            
+            
+            
+            
+            _first_name =data[0]['first_name']
+            _last_name = data[0]['last_name']
+            _email = data[0]['email']
+            _phone_number = data[0]['phone_number']
+            _username = data[0]['username']
+
+
+            # verify if the username exists
+
+            # if yes, get his firstname, lastname, phone_number, email
+            
+            saveContact_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username}
+            print(saveContact_dict)
+            data = db().insert('saved_contacts', **saveContact_dict)
+            print(data)
+
+            
+            response = make_response(100, "user contact saved succcesfully")
+            print(response)
+
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "Invalid data types in saving contact")
+            return response
+
+    #get saved contacts by user_id(iranks)
+    @staticmethod
+    @token_required
+    def getSavedContactsByUserId():
+        try:
+            _json = request.json
+            _user_id = _json['user_id']
+
+            data = get_saved_contacts_by_user_id(_user_id)
+            
+            if len(data) <= 0:
+                response = make_response(403, "No saved contacts with this user id")
+                return response
+
+            response = jsonify(data)
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to pull saved contacts with this id")
+            return response
+
+    #deleting a saved contact(iranks)
+    @token_required
+    def deleteContact():
+        try:
+            _json = request.json
+            _userId = _json['user_id']
+            _username = _json['username']
+            sql = "DELETE FROM `saved_contacts` WHERE user_id = '" + _userId + "' AND username = '" + _username + "' "
+            
+            db().delete(sql)
+            
+            response = make_response(100, "saved contact deleted successfully")
+            return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "failed to delete saved contact")
+            return response
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # responses
@@ -420,6 +527,12 @@ def get_user_detail(Email, Phone_number):
     sql = "SELECT * FROM `user` WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
     data = db().select(sql)
     return data
+#user contacts based on user id and username
+def get_user_contacts(user_id, username):
+    sql = "SELECT * FROM `saved_contacts` WHERE user_id = '" + user_id + "' AND username = '" + username + "' "
+    data = db().select(sql)
+    return data
+
 
 
 # user details based on id and current password
@@ -499,6 +612,8 @@ def get_user_by_email(email):
     data = db().select(sql)
     return data
 
+
+
     # get user by username
 def get_user_by_username(username):
     sql = "SELECT * FROM `user` WHERE username = '" + str(username) + "' "
@@ -528,4 +643,11 @@ def get_mod_userdetail(Email, Phone_number):
         }
         ]
     return data
+
+      # get saved contact by  user_id(iranks)
+def get_saved_contacts_by_user_id(user_id):
+    sql = "SELECT * FROM `saved_contacts` WHERE user_id = '" + str(user_id) + "' "
+    data = db().select(sql)
+    return data
+
 
