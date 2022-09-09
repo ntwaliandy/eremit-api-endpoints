@@ -388,7 +388,9 @@ class User:
             _json = request.json
             _user_id = _json['user_id']
 
+            
             data = get_user_details_by_id(_user_id)
+            
             
             if len(data) <= 0:
                 response = make_response(403, "No such user")
@@ -597,6 +599,7 @@ def get_user_details_by_id(userId):
             "date_time": result[0]['date_time']
         }
         ]
+    
     return data
 
 # user created response
