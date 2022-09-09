@@ -9,9 +9,13 @@ import uuid
 import phonenumbers
 from flask import jsonify, request
 from application.libs.sms import send
+from application.libs.sms import sms
+from application.libs.sms import on_finish 
 from helper.dbhelper import Database as db
 from application.models.user_wallet import UserWallet
 from application.models.auth import token_required
+import africastalking
+
 
 
 application.config['SECRET_KEY'] = 'a6d4c1d6828549b6ada2d94ef4aeb9a1'
@@ -51,6 +55,11 @@ class User:
                 return make_response(403, "Username Already Exists")
                 
             otp_generated = randint(0000,9999)
+
+            #sending otp using africa stalking on user adding
+            
+            sms.send(str(otp_generated) + " " + "is the otp to verify your userdetails on clic. Generated otp doesnt expire unless used ", [_phone_number], callback=on_finish)
+
             status = 'pending'
             otp_sent = send(otp_generated, _email)
             print("start")
@@ -188,6 +197,11 @@ class User:
                 response = make_response(403, "Wrong Email")
                 return response
             otp_generated = randint(0000,9999)
+
+            #sending sms using africastalking on forgot password
+            _phone_number = check_user[0]['phone_number']
+            
+            sms.send(str(otp_generated) + " " + "is the otp to verify your forgot password claim credentials on clic. Generated otp doesnt expire unless used ", [_phone_number], callback=on_finish)
             status = 'pending'
             _user_id = check_user[0]['user_id']
             otp_sent = send(otp_generated, _email)
@@ -288,9 +302,14 @@ class User:
             if len(check_user) <= 0:
                 data = make_response(403, "Invalid User")
                 return data
-
+            
             #sending otp while logging in
             otp_generated = randint(0000,9999)
+
+            #sending sms using africas talking
+            _phone_number = check_user[0]['phone_number']
+            sms.send(str(otp_generated) + " " + "is the otp to verify your login credentials on clic. Generated otp doesnt expire unless used ", [_phone_number], callback=on_finish)
+
             status = 'pending'
             _user_id = check_user[0]['user_id']
             otp_sent = send(otp_generated, _email)

@@ -10,6 +10,10 @@ from application.models.auth import token_required
 from application.libs.sms import statusMessage
 import requests
 from random import randint
+from rave_python import Rave
+from application.libs.sms import on_finish
+from application.libs.sms import sms
+import africastalking
 # from rave_python import Rave
 
 
@@ -86,7 +90,15 @@ class Transaction:
             print(to_last_name)
             send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
 
+            #sending sms using africastalking
+            from_phone_number = check_from_personal_account[0]['phone_number'] 
+            sms.send("You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name + "login on clic for more details of your transactions", [from_phone_number], callback=on_finish)
+
             send_from_mail = statusMessage(to_email, "You have successfully received " + str(_receiver_money) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
+            
+            #sending sms using africastalking
+            to_phone_number = check_to_personal_account[0]['phone_number']
+            sms.send("You have successfully received " + str(_receiver_money) + " " + to_currency + " from " + from_first_name + " " + from_last_name + "login on clic for more details of your transactions", [to_phone_number], callback=on_finish)
 
             response = make_response(100, "transaction statement created")
             return response
@@ -290,6 +302,9 @@ class Transaction:
                         db().insert('transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
 
+                        #sending using africastalking
+                        sms.send("You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET." + "login on clic for more details of your transactions", [_phoneNumber], callback=on_finish)
+
                         response = make_response(100, str(_amount) + " " + _currency + " transferred successfully")
                         return response
 
@@ -347,6 +362,9 @@ class Transaction:
                         trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
                         db().insert('transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
+
+                        #sending sms using africastalking
+                        sms.send("You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET." + "login on clic for more details of your transactions", [_phoneNumber], callback=on_finish)
 
                         response = make_response(100, str(_amount) + " " + _currency + " transferred successfully")
                         return response
@@ -489,6 +507,9 @@ class Transaction:
                         trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
                         db().insert('transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
+                        
+                        #sending sms using africastalking
+                        sms.send("You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET." + "login on clic for more details of your transactions", [_phoneNumber], callback=on_finish)
 
                         response = make_response(100, str(_amount) + " " + _currency + " transferred successfully")
                         return response
@@ -545,6 +566,9 @@ class Transaction:
                         trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
                         db().insert('transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
+                        
+                        #sending sms using africastalking
+                        sms.send("You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET." + "login on clic for more details of your transactions", [_phoneNumber], callback=on_finish)
 
                         response = make_response(100, str(_amount) + " " + _currency + " transferred successfully")
                         return response
