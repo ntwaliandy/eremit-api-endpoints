@@ -1,6 +1,7 @@
 from flask_mail import Mail, Message
 from application import application
 from flask import jsonify
+import africastalking
 
 application.config['MAIL_SERVER'] = 'smtp.gmail.com'
 application.config['MAIL_PORT'] = 465
@@ -22,3 +23,20 @@ def statusMessage(Email, message):
     msg.body = message
     mail.send(msg)
     return jsonify({"status": 100, "message": "message successfully sent to both accounts."})
+
+#sending messages using sandbox
+username = "sandbox"   
+api_key = "afe6d0cf21b400ec030b9fc65e87f16658e89070e45ba137395d0950687d9537"     
+africastalking.initialize(username, api_key)
+sms = africastalking.SMS
+           
+def on_finish(error, response):
+    if error is not None:
+        raise error
+    print(response)
+#  sms.send(otp_generated, [_phone_number], callback=on_finish)
+
+
+# def sending(message, recipients):
+#     sms.send("message", [recipients])
+    
