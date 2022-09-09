@@ -25,8 +25,8 @@ def statusMessage(Email, message):
     return jsonify({"status": 100, "message": "message successfully sent to both accounts."})
 
 #sending messages using sandbox
-username = "sandbox"   
-api_key = "afe6d0cf21b400ec030b9fc65e87f16658e89070e45ba137395d0950687d9537"     
+username = "EREMIT"   
+api_key = "ecc0e2d4f576d07a7fe6b2268b1f0937d2c9a0a1949ed60036d2a5ca6c44826d"     
 africastalking.initialize(username, api_key)
 sms = africastalking.SMS
            
