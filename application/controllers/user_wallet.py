@@ -1,3 +1,4 @@
+from crypt import methods
 from flask import Blueprint, request, jsonify, json
 from application.models.user_wallet import UserWallet
 
@@ -28,4 +29,11 @@ def all_wallets():
 @bp_app.route('/user_wallet_details', methods=['POST'])
 def wallet_details():
     data = UserWallet.getWalletDetails()
+    return data
+
+
+# displaying username from user wallet id
+@bp_app.route('/username_byWalletID', methods=['POST'])
+def username_byWalletID():
+    data = UserWallet.getUsernamebyWalletID()
     return data

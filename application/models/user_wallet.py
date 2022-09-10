@@ -120,6 +120,25 @@ class UserWallet:
             response = make_response(403, "syntax error")
             return response
 
+    
+    # getting username by wallet id
+    @token_required
+    def getUsernamebyWalletID():
+        try:
+            _json = request.json
+            _wallet_id = _json['wallet_id']
+            walletDeatils = get_user_wallet_details(_wallet_id)
+            user_id = walletDeatils[0]['user_id']
+            userDetails = get_userDetails(user_id)
+            firstName = userDetails[0]['first_name']
+            lastName = userDetails[0]['last_name']
+            response = make_response(100, firstName + " " + lastName)
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "invalid walletID")
+            return response
+
 
 
 
@@ -146,6 +165,12 @@ def check_user_currency(userId, currrency_code):
 # get wallet details basing on wallet id
 def get_user_wallet_details(walletId):
     sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + str(walletId) + "' "
+    data = db().select(sql)
+    return data
+
+# geet user details by userID
+def get_userDetails(userId):
+    sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
     data = db().select(sql)
     return data
 
