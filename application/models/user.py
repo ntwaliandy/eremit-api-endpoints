@@ -1,7 +1,9 @@
 import hashlib
 from operator import methodcaller
+import pathlib
 from random import randint
 from unittest import result
+from urllib import response
 import jwt
 from datetime import datetime, timedelta
 from application import application
@@ -15,6 +17,7 @@ from helper.dbhelper import Database as db
 from application.models.user_wallet import UserWallet
 from application.models.auth import token_required
 import africastalking
+import os
 
 
 
@@ -510,6 +513,41 @@ class User:
         except Exception as e:
             print(e)
             response = make_response(403, "failed to delete saved contact")
+            return response
+
+
+    # profile pic update
+    @token_required
+    def profileUpdate():
+        try:
+            _files = request.files
+            _form = request.form
+            _receivedFile = _files['file']
+            _user_id = _form['user_id']
+
+            check_user = get_user_details_by_id(_user_id)
+            if len(check_user) <= 0:
+                response = make_response(403, "invalid user ID")
+                return response
+
+            generated_name = str(uuid.uuid4()) + pathlib.Path(_receivedFile.filename).suffix
+            folder = "/var/www/eremit_uploads"
+
+            _receivedFile.save(os.path.join(folder, generated_name))
+            path = folder + generated_name
+            print(path)
+
+            
+
+            prof_pic_dict = {"profile_pic": path}
+            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **prof_pic_dict)
+
+            response = make_response(100, "file received successfully")
+            return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, str(e))
             return response
             
             
