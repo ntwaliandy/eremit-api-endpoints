@@ -531,10 +531,10 @@ class User:
                 return response
 
             generated_name = str(uuid.uuid4()) + pathlib.Path(_receivedFile.filename).suffix
-            folder = "/var/www/eremit_uploads"
+            folder = "/var/www/html/eremit_uploads/"
 
             _receivedFile.save(os.path.join(folder, generated_name))
-            path = folder + generated_name
+            path = "http://18.116.9.199/eremit_uploads/" + generated_name
             print(path)
 
             
@@ -632,6 +632,7 @@ def get_user_details_by_id(userId):
             "email": result[0]['email'],
             "username": result[0]['username'],
             "phone_number": result[0]['phone_number'],
+            "profile_pic": result[0]['profile_pic'],
             "user_id": result[0]['user_id'],
             "status": result[0]['status'],
             "date_time": result[0]['date_time']
