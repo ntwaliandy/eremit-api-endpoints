@@ -1,9 +1,6 @@
 import hashlib
-from operator import methodcaller
 import pathlib
 from random import randint
-from unittest import result
-from urllib import response
 import jwt
 from datetime import datetime, timedelta
 from application import application
