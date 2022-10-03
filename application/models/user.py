@@ -546,6 +546,32 @@ class User:
             print(e)
             response = make_response(403, str(e))
             return response
+
+
+    # get user details by username
+    @token_required
+    def getUserByUsername():
+        try:
+            _json = request.json
+            _username = _json['username']
+
+            check_user = get_user_by_username(_username)
+            
+            if len(check_user) <= 0:
+                response = make_response(403, "user doesn't exist")
+                return response
+
+            first_name = check_user[0]['first_name']
+            last_name = check_user[0]['last_name']
+
+            response = make_response(100, str(first_name) + " " + str(last_name))
+            return response
+
+        except Exception as e:
+            print(e)
+            response = make_response(403, "wrong request")
+            return response
+
             
             
 
@@ -707,5 +733,6 @@ def get_saved_contacts_by_user_id(user_id):
     sql = "SELECT * FROM `saved_contacts` WHERE user_id = '" + str(user_id) + "' "
     data = db().select(sql)
     return data
+
 
 

@@ -1,4 +1,5 @@
 
+from crypt import methods
 from flask import Blueprint, request, jsonify, json
 from application.models.user import User
 
@@ -111,4 +112,11 @@ def delete_contact():
 @bp_app.route('/profile_update', methods=['PUT'])
 def profile_update():
     data = User.profileUpdate()
+    return data
+
+
+# getting user by username
+@bp_app.route('/userByUsername', methods=['POST'])
+def userByUsername():
+    data = User.getUserByUsername()
     return data
