@@ -15,6 +15,8 @@ from application.models.user_wallet import UserWallet
 from application.models.auth import token_required
 import africastalking
 import os
+from application.libs.aws import s3, bucketName
+
 
 
 
@@ -528,10 +530,15 @@ class User:
                 return response
 
             generated_name = str(uuid.uuid4()) + pathlib.Path(_receivedFile.filename).suffix
-            folder = "/var/www/html/eremit_uploads/"
+            
 
-            _receivedFile.save(os.path.join(folder, generated_name))
-            path = "http://18.116.9.199/eremit_uploads/" + generated_name
+            _receivedFile.save(generated_name)
+            s3.upload_file(
+                Bucket = bucketName,
+                Filename=generated_name,
+                Key = generated_name
+            )
+            path = "https://eremitphotos.s3.eu-west-2.amazonaws.com/" + generated_name
             print(path)
 
             
