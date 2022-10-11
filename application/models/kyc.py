@@ -5,6 +5,7 @@ from flask import jsonify, request
 import pathlib
 from helper.dbhelper import Database as db
 
+from application.libs.aws import s3, bucketName
 
 
 class Kyc:
@@ -13,6 +14,7 @@ class Kyc:
 
     # profile pic update
     @token_required
+    @staticmethod
     def createKyc():
         try:
             _files = request.files
@@ -27,6 +29,7 @@ class Kyc:
             _personalPic = _files['personal_pic']
             _frontPic = _files['front_pic']
             _backPic = _files['back_pic']
+
             
 
             check_user = get_userDetails_by_id(_user_id)
@@ -37,14 +40,33 @@ class Kyc:
             generated_personal_name = str(uuid.uuid4()) + pathlib.Path(_personalPic.filename).suffix
             generated_front_name = str(uuid.uuid4()) + pathlib.Path(_frontPic.filename).suffix
             generated_back_name = str(uuid.uuid4()) + pathlib.Path(_backPic.filename).suffix
-            folder = "/var/www/html/eremit_uploads/"
 
-            _personalPic.save(os.path.join(folder, generated_personal_name))
-            _frontPic.save(os.path.join(folder, generated_front_name))
-            _backPic.save(os.path.join(folder, generated_back_name))
-            personal_path = "http://18.116.9.199/eremit_uploads/" + generated_personal_name
-            front_path = "http://18.116.9.199/eremit_uploads/" + generated_front_name
-            back_path = "http://18.116.9.199/eremit_uploads/" + generated_back_name
+            _personalPic.save(generated_personal_name)
+            _frontPic.save(generated_front_name)
+            _backPic.save(generated_back_name)
+
+            
+            s3.upload_file(
+                Bucket = bucketName,
+                Filename=generated_personal_name,
+                Key = generated_personal_name
+            )
+            s3.upload_file(
+                Bucket = bucketName,
+                Filename=generated_front_name,
+                Key = generated_front_name
+                )
+            s3.upload_file(
+                Bucket = bucketName,
+                Filename=generated_back_name,
+                Key = generated_back_name
+            )
+
+            
+            
+            personal_path = "https://eremitphotos.s3.eu-west-2.amazonaws.com/" + generated_personal_name
+            front_path = "https://eremitphotos.s3.eu-west-2.amazonaws.com/" + generated_front_name
+            back_path = "https://eremitphotos.s3.eu-west-2.amazonaws.com/" + generated_back_name
 
             
 
