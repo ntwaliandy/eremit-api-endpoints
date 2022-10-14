@@ -703,7 +703,7 @@ def get_wallet_details(userId, currency):
 
 #check user walllets basing on user_id(iranks)
 def get_user_wallets(userId):
-    sql = "SELECT transaction.from_account, transaction.to_account, transaction.status, transaction.id, transaction.transaction_id, transaction.reason, transaction.date_time, transaction.amount, user_wallet.user_id, user_wallet.currency_code FROM transaction INNER JOIN user_wallet ON (transaction.from_account=user_wallet.wallet_id OR transaction.to_account=user_wallet.wallet_id) AND user_wallet.user_id= '" + str(userId) + "'" + " ORDER BY transaction.date_time DESC LIMIT 8"
+    sql = "SELECT transaction.from_account, transaction.to_account, transaction.status, transaction.id, transaction.transaction_id, transaction.reason, transaction.date_time, transaction.amount, user_wallet.user_id, user_wallet.currency_code, user.first_name, user.last_name FROM transaction AND user INNER JOIN user_wallet ON (transaction.from_account=user_wallet.wallet_id OR transaction.to_account=user_wallet.wallet_id) AND user_wallet.user_id= '" + str(userId) + "' AND user.user_id= '" + str(userId)  + "' ORDER BY transaction.date_time DESC LIMIT 8"
     data = db().select(sql)
     return data
 #check user transaction basing on time stamp(iranks)
