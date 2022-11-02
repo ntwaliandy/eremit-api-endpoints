@@ -113,7 +113,7 @@ class User:
             },
                 application.config['SECRET_KEY'])
 
-            response = user_created_response(100, "user created successfully", userData, token)
+            response = user_created_response(100, "user created successfully", userData, token.decode())
             return response
 
         except Exception as e:
@@ -355,7 +355,7 @@ class User:
                 'expiration': str(datetime.now() + timedelta(hours=23))
             },
                 application.config['SECRET_KEY'])
-            response = user_logged_response(100, "user loggedin successfully", Userdata, token)
+            response = user_logged_response(100, "user loggedin successfully", Userdata, token.decode())
             return response
             
         except Exception as e:
