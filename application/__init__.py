@@ -1,5 +1,5 @@
-from flask import Flask, redirect, request, url_for, render_template
-from flask_mysqldb import MySQL
+from flask import Flask
+from flask_mysql_connector import MySQL
 from config import DB_CONFIG
 
 

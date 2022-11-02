@@ -15,4 +15,4 @@ application.register_blueprint(notification_mod)
 application.register_blueprint(kyc_mod)
 cors = CORS(application)
 
-application.run(port=9000, host="0.0.0.0", debug=True)
+application.run(port=8500, host="0.0.0.0", debug=True)
