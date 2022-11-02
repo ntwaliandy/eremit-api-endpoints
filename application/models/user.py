@@ -27,7 +27,7 @@ class User:
 
     @staticmethod
     def all_users():
-        sql = "SELECT * FROM `user` "
+        sql = "SELECT * FROM eremit_db.user "
         data = db().select(sql)
         return jsonify(data)
 
@@ -67,7 +67,7 @@ class User:
             print("start")
             addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "status": status}
             print(addUser_dict)
-            data = db().insert('user', **addUser_dict)
+            data = db().insert('eremit_db.user', **addUser_dict)
             print(data)
 
             
@@ -101,7 +101,7 @@ class User:
             _user_id = check_user[0]['user_id']
 
             updatedUser_dict = {"status": status}
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
 
             create_user_wallet = UserWallet.createWallet(_user_id)
             userData = get_user_details_by_id(_user_id)
@@ -137,7 +137,7 @@ class User:
 
             updateUser_dict = {"first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email}
 
-            db().Update('user', "user_id  =  '" + str(_userId) + "'", **updateUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_userId) + "'", **updateUser_dict)
 
             response = make_response(100, "user updated successfully")
 
@@ -175,7 +175,7 @@ class User:
 
             UpdateUser_dict = {"password": hash_new_password}
 
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **UpdateUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **UpdateUser_dict)
 
             response = make_response(100, "password updated successfully")
             return response
@@ -208,7 +208,7 @@ class User:
             _user_id = check_user[0]['user_id']
             otp_sent = send(otp_generated, _email)
             updateUser_dict = { "email": _email,  "otp": otp_generated, "status": status}
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
             
 
             
@@ -238,7 +238,7 @@ class User:
             _user_id = check_usr_exist[0]['user_id']
 
             updateUser_dict = {"status": status}
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
             response = make_response(100, "OTP verified successfully")
             return response
         except Exception as e:
@@ -275,7 +275,7 @@ class User:
             status = 'Active'
             _user_id = check_user[0]['user_id']
             UpdateUser_dict = { "password": hash_new_password, "status": status}
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **UpdateUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **UpdateUser_dict)
 
             response = make_response(100, "password updated successfully")
             return response
@@ -317,7 +317,7 @@ class User:
             otp_sent = send(otp_generated, _email)
             print(otp_sent)
             updateUser_dict = { "otp": otp_generated, "status": status}
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
             response = make_response(100, "otp sent successfully to your email")
             
             return response
@@ -348,7 +348,7 @@ class User:
             _user_id = check_usr_exist[0]['user_id']
 
             updateUser_dict = {"status": status}
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **updateUser_dict)
             
             token = jwt.encode({
                 'email': _email, 
@@ -369,9 +369,9 @@ class User:
         try:
             _json = request.json
             _user_id = _json['user_id']
-            sql = "DELETE FROM `user` WHERE user_id = '" + str(_user_id) + "' "
+            sql = "DELETE FROM eremit_db.user WHERE user_id = '" + str(_user_id) + "' "
             db().delete(sql)
-            sql_wallet = "DELETE FROM `user_wallet` WHERE user_id = '" + str(_user_id) + "' "
+            sql_wallet = "DELETE FROM eremit_db.user_wallet WHERE user_id = '" + str(_user_id) + "' "
             db().delete(sql_wallet)
             response = make_response(100, "user deleted successfully")
             return response
@@ -502,7 +502,7 @@ class User:
             _json = request.json
             _userId = _json['user_id']
             _username = _json['username']
-            sql = "DELETE FROM `saved_contacts` WHERE user_id = '" + _userId + "' AND username = '" + _username + "' "
+            sql = "DELETE FROM eremit_db.saved_contacts WHERE user_id = '" + _userId + "' AND username = '" + _username + "' "
             
             db().delete(sql)
             
@@ -544,7 +544,7 @@ class User:
             
 
             prof_pic_dict = {"profile_pic": path}
-            db().Update('user', "user_id  =  '" + str(_user_id) + "'", **prof_pic_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **prof_pic_dict)
 
             response = make_response(100, "file received successfully")
             return response
@@ -607,18 +607,18 @@ def make_response(status, message):
 
 # user details
 def get_user_details(Email, Password):
-    sql = "SELECT * FROM `user` WHERE email = '" + Email + "' AND password = '" + Password + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE email = '" + Email + "' AND password = '" + Password + "' "
     data = db().select(sql)
     return data
 
 # user details based on register model
 def get_user_detail(Email, Phone_number):
-    sql = "SELECT * FROM `user` WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
     data = db().select(sql)
     return data
 #user contacts based on user id and username
 def get_user_contacts(user_id, username):
-    sql = "SELECT * FROM `saved_contacts` WHERE user_id = '" + user_id + "' AND username = '" + username + "' "
+    sql = "SELECT * FROM eremit_db.saved_contacts WHERE user_id = '" + user_id + "' AND username = '" + username + "' "
     data = db().select(sql)
     return data
 
@@ -626,19 +626,19 @@ def get_user_contacts(user_id, username):
 
 # user details based on id and current password
 def get_user_details_by_id_and_password(UserId, CurrentPassword):
-    sql = "SELECT * FROM `user` WHERE user_id = '" + UserId + "' AND password = '" + CurrentPassword + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE user_id = '" + UserId + "' AND password = '" + CurrentPassword + "' "
     data = db().select(sql)
     return data
 
 #user details based on id and email (iranks)    
 def get_user_details_by_id_and_email(UserId, email):
-    sql = "SELECT * FROM `user` WHERE user_id = '" + UserId + "' AND email = '" + email + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE user_id = '" + UserId + "' AND email = '" + email + "' "
     data = db().select(sql)
     return data
 
 #user details based 0on email an otp(iranks)
 def get_user_by_email_and_otp(email, otp):
-    sql = "SELECT * FROM `user` WHERE email = '" + email + "' AND otp = '" + otp + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE email = '" + email + "' AND otp = '" + otp + "' "
     data = db().select(sql)
     return data
 
@@ -646,14 +646,14 @@ def get_user_by_email_and_otp(email, otp):
 
 # user details based on id and status(iranks)
 def get_user_details_by_id_and_status(UserId, status):
-    sql = "SELECT * FROM `user` WHERE user_id = '" + UserId + "' AND status = '" + status + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE user_id = '" + UserId + "' AND status = '" + status + "' "
     data = db().select(sql)
     return data
 
 
 # get user details by id
 def get_user_details_by_id(userId):
-    sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE user_id = '" + str(userId) + "' "
     result = db().select(sql)
     data = [
         {
@@ -681,7 +681,7 @@ def user_logged_response(status, message, data, Token):
 
 # get user by email(iranks)
 def get_user_details_by_email(email):
-    sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE email = '" + str(email) + "' "
     result = db().select(sql)
     data = [
         {
@@ -699,7 +699,7 @@ def get_user_details_by_email(email):
 
     # get user by email
 def get_user_by_email(email):
-    sql = "SELECT * FROM `user` WHERE email = '" + str(email) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE email = '" + str(email) + "' "
     data = db().select(sql)
     return data
 
@@ -707,19 +707,19 @@ def get_user_by_email(email):
 
     # get user by username
 def get_user_by_username(username):
-    sql = "SELECT * FROM `user` WHERE username = '" + str(username) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE username = '" + str(username) + "' "
     data = db().select(sql)
     return data
 
     # get user by otp(iranks)
 def get_user_by_otp(otp):
-    sql = "SELECT * FROM `user` WHERE otp = '" + str(otp) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE otp = '" + str(otp) + "' "
     data = db().select(sql)
     return data
 
 # get user data without password, otp
 def get_mod_userdetail(Email, Phone_number):
-    sql = "SELECT * FROM `user` WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE email = '" + Email + "' OR phone_number = '" + Phone_number + "' "
     result = db().select(sql)
     data = [
         {
@@ -737,7 +737,7 @@ def get_mod_userdetail(Email, Phone_number):
 
       # get saved contact by  user_id(iranks)
 def get_saved_contacts_by_user_id(user_id):
-    sql = "SELECT * FROM `saved_contacts` WHERE user_id = '" + str(user_id) + "' "
+    sql = "SELECT * FROM eremit_db.saved_contacts WHERE user_id = '" + str(user_id) + "' "
     data = db().select(sql)
     return data
 

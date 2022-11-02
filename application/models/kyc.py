@@ -71,7 +71,7 @@ class Kyc:
             
 
             kyc_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "gender": _gender, "date_of_birth": _date_of_birth, "nin": _nin, "status": _status, "front_pic": front_path, "back_pic": back_path, "personal_pic": personal_path}
-            db().insert('kyc', **kyc_dict)
+            db().insert('eremit_db.kyc', **kyc_dict)
 
             response = make_response(100, "Kyc sent successfully")
             return response
@@ -89,6 +89,6 @@ def make_response(status, message):
 
     # checking user by user_id in kyc table
 def get_userDetails_by_id(userID):
-    sql = "SELECT * FROM `kyc` WHERE user_id = '" + str(userID) + "' "
+    sql = "SELECT * FROM eremit_db.kyc WHERE user_id = '" + str(userID) + "' "
     data = db().select(sql)
     return data

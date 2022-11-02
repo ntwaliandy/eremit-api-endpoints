@@ -16,7 +16,7 @@ class Notification:
             _message = _json['message']
 
             addNotification_dic = {"notification_id": _notification_id, "message": _message}
-            data = db().insert('notification', **addNotification_dic)
+            data = db().insert('eremit_db.notification', **addNotification_dic)
 
             response = make_response(100, "Notification created successfully!!")
             return response
@@ -30,7 +30,7 @@ class Notification:
     @token_required
     def getNotifications():
         try:
-            sql = "SELECT * FROM `notification` "
+            sql = "SELECT * FROM eremit_db.notification "
             data = db().select(sql)
             return jsonify(data)
 

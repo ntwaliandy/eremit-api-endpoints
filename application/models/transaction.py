@@ -73,18 +73,18 @@ class Transaction:
 
             _from_net_balance = check_from_balance - _amount
             fromupdate_dict = {"balance": _from_net_balance}
-            db().Update('user_wallet', "wallet_id = '" + str(_from_account) + "'", **fromupdate_dict)
+            db().Update('eremit_db.user_wallet', "wallet_id = '" + str(_from_account) + "'", **fromupdate_dict)
             
             create_from_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusFrom}
-            db().insert('transaction', **create_from_transaction_dict)
+            db().insert('eremit_db.transaction', **create_from_transaction_dict)
 
 
             _to_net_balance = check_to_user[0]['balance'] + _receiver_money
             toupdate_dict = {"balance": _to_net_balance}
-            db().Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
+            db().Update('eremit_db.user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
 
             create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _receiver_money, "reason": _reason, "status": _statusTo}
-            db().insert('transaction', **create_to_transaction_dict)
+            db().insert('eremit_db.transaction', **create_to_transaction_dict)
             
             print(to_last_name)
             send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
@@ -93,7 +93,7 @@ class Transaction:
             from_phone_number = check_from_personal_account[0]['phone_number'] 
             sms.send("You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name + "login on clic for more details of your transactions", [from_phone_number], callback=on_finish)
 
-            send_from_mail = statusMessage(to_email, "You have successfully received " + str(_receiver_money) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
+            send_to_mail = statusMessage(to_email, "You have successfully received " + str(_receiver_money) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
             
             #sending sms using africastalking
             to_phone_number = check_to_personal_account[0]['phone_number']
@@ -112,7 +112,7 @@ class Transaction:
     @token_required
     def allTransactions():
         try:
-            sql = "SELECT * FROM `transaction` "
+            sql = "SELECT * FROM eremit_db.transaction "
             data = db().select(sql)
             return jsonify(data)
 
@@ -295,10 +295,10 @@ class Transaction:
                         latest_amount = wallet_amount - totalCharge
                         updatedWallet_dict = {"balance": latest_amount}
 
-                        db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+                        db().Update("eremit_db.user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
                         trans_id = uuid.uuid4()
                         trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
-                        db().insert('transaction', **trans_dict)
+                        db().insert('eremit_db.transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
 
                         #sending using africastalking
@@ -356,10 +356,10 @@ class Transaction:
                         latest_amount = wallet_amount - totalCharge
                         updatedWallet_dict = {"balance": latest_amount}
 
-                        db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+                        db().Update("eremit_db.user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
                         trans_id = uuid.uuid4()
                         trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
-                        db().insert('transaction', **trans_dict)
+                        db().insert('eremit_db.transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
 
                         #sending sms using africastalking
@@ -501,10 +501,10 @@ class Transaction:
                         latest_amount = wallet_amount - totalCharge
                         updatedWallet_dict = {"balance": latest_amount}
 
-                        db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+                        db().Update("eremit_db.user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
                         trans_id = uuid.uuid4()
                         trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
-                        db().insert('transaction', **trans_dict)
+                        db().insert('eremit_db.transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
                         
                         #sending sms using africastalking
@@ -560,10 +560,10 @@ class Transaction:
                         latest_amount = wallet_amount - totalCharge
                         updatedWallet_dict = {"balance": latest_amount}
 
-                        db().Update("user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
+                        db().Update("eremit_db.user_wallet", "wallet_id = '" + str(walletId) + "'", **updatedWallet_dict)
                         trans_id = uuid.uuid4()
                         trans_dict = {"transaction_id": trans_id, "from_account": walletId, "to_account": "MOBILE MONEY", "trans_type": _transType, "amount": totalCharge, "reason": "withdrawn", "status": "credit"}
-                        db().insert('transaction', **trans_dict)
+                        db().insert('eremit_db.transaction', **trans_dict)
                         statusMessage(email, "You have successfully withdrawn " + str(_amount) + _currency + " from your " + _currency + " WALLET.")
                         
                         #sending sms using africastalking
@@ -647,11 +647,11 @@ class Transaction:
             _newBalance = _currentBalance + _amount
 
             transDict = {"transaction_id": uuid.uuid4(), "from_account": "MM_UGANDA", "to_account": _walletId, "amount": _amount, "status": "debit", "trans_type": "mm_to_wallet", "reason": "deposited"}
-            db().insert('transaction', **transDict)
+            db().insert('eremit_db.transaction', **transDict)
 
 
             updatedWallet_dict = {"balance": _newBalance}
-            db().Update("user_wallet", "wallet_id = '" + str(_walletId) + "'", **updatedWallet_dict)
+            db().Update("eremit_db.user_wallet", "wallet_id = '" + str(_walletId) + "'", **updatedWallet_dict)
 
             emaiSent = statusMessage(get_email, "You have successfuly Deposited " + str(_amount) + _currency + " to your " + " " + _currency + " WALLET")
             return redirect('http://18.116.9.199/eremit/#/dashboard')
@@ -668,46 +668,46 @@ def make_response(status, message):
     return jsonify({"message": message, "status": status})
 
 def get_walletDetailsBy_walletId(walletId):
-    sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + walletId + "' "
+    sql = "SELECT * FROM eremit_db.user_wallet WHERE wallet_id = '" + walletId + "' "
     data = db().select(sql)
     return data
 #getting all transactions for a specific wallet id
 def get_transactions_details(walletId):
-    sql = "SELECT * FROM `transaction` WHERE from_account = '" + walletId + "' OR to_account = '" + walletId + "' "
+    sql = "SELECT * FROM eremit_db.transaction WHERE from_account = '" + walletId + "' OR to_account = '" + walletId + "' "
     data = db().select(sql)
     return data
 
 # getting user by username
 def check_user_by_username(Username):
-    sql = "SELECT * FROM `user` WHERE username = '" + str(Username) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE username = '" + str(Username) + "' "
     data = db().select(sql)
     return data
 
 # getting user by user_id
 def check_user_by_id(userId):
-    sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE user_id = '" + str(userId) + "' "
     data = db().select(sql)
     return data
     
 # getting user by email
 def check_user_by_email(email):
-    sql = "SELECT * FROM `user` WHERE email = '" + email + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE email = '" + email + "' "
     data = db().select(sql)
     return data
 
 # getting user wallet details
 def get_wallet_details(userId, currency):
-    sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' AND currency_code = '" + currency + "' "
+    sql = "SELECT * FROM eremit_db.user_wallet WHERE user_id = '" + str(userId) + "' AND currency_code = '" + currency + "' "
     data = db().select(sql)
     return data
 
 #check user walllets basing on user_id(iranks)
 def get_user_wallets(userId):
-    sql = "SELECT transaction.from_account, transaction.to_account, transaction.status, transaction.id, transaction.transaction_id, transaction.reason, transaction.date_time, transaction.amount, user_wallet.user_id, user_wallet.currency_code FROM transaction INNER JOIN user_wallet ON (transaction.from_account=user_wallet.wallet_id OR transaction.to_account=user_wallet.wallet_id) AND user_wallet.user_id= '" + str(userId) + "'" + " ORDER BY transaction.date_time DESC LIMIT 8"
+    sql = "SELECT transaction.from_account, transaction.to_account, transaction.status, transaction.id, transaction.transaction_id, transaction.reason, transaction.date_time, transaction.amount, user_wallet.user_id, user_wallet.currency_code FROM eremit_db.transaction INNER JOIN eremit_db.user_wallet ON (transaction.from_account=user_wallet.wallet_id OR transaction.to_account=user_wallet.wallet_id) AND user_wallet.user_id= '" + str(userId) + "'" + " ORDER BY transaction.date_time DESC LIMIT 8"
     data = db().select(sql)
     return data
 #check user transaction basing on time stamp(iranks)
 def get_transaction_time(dateTime):
-    sql = "SELECT * FROM `transaction` WHERE date_time = '" + str(dateTime) + "' "
+    sql = "SELECT * FROM eremit_db.transaction WHERE date_time = '" + str(dateTime) + "' "
     data = db().select(sql)
     return data

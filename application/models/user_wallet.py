@@ -20,7 +20,7 @@ class UserWallet:
             _currency_code = "USD"
 
             addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
-            data = db().insert('user_wallet', **addWallet_dict)
+            data = db().insert('eremit_db.user_wallet', **addWallet_dict)
 
             return _wallet_id
         except Exception as e:
@@ -53,7 +53,7 @@ class UserWallet:
 
             other_wallet_dict = {"user_id": _user_id, "wallet_id": _wallet_id, "balance": balance, "currency_code": _currency_code}
 
-            db().insert('user_wallet', **other_wallet_dict)
+            db().insert('eremit_db.user_wallet', **other_wallet_dict)
 
             response = make_response(100, "New Wallet created successfully")
             return response
@@ -77,7 +77,7 @@ class UserWallet:
             if balance > 0:
                 response = make_response(403, "can't delete wallet with certain amount")
                 return response
-            sql = "DELETE FROM `user_wallet` WHERE wallet_id = '" + _wallet_id + "' "
+            sql = "DELETE FROM eremit_db.user_wallet WHERE wallet_id = '" + _wallet_id + "' "
             db().delete(sql)
             response = make_response(100, "wallet deleted successfully")
             return response
@@ -92,7 +92,7 @@ class UserWallet:
     @token_required
     def allWallets():
         try:
-            sql = "SELECT * FROM `user_wallet` "
+            sql = "SELECT * FROM eremit_db.user_wallet "
             data = db().select(sql)
             return jsonify(data)
 
@@ -152,25 +152,25 @@ def make_response(status, message):
 
 # get user details basing on e-wallet
 def get_user_details(userId):
-    sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + str(userId) + "' "
+    sql = "SELECT * FROM eremit_db.user_wallet WHERE user_id = '" + str(userId) + "' "
     data = db().select(sql)
     return data
 
 # get user details basing on e-wallet currency
 def check_user_currency(userId, currrency_code):
-    sql = "SELECT * FROM `user_wallet` WHERE user_id = '" + userId + "' AND currency_code = '" + currrency_code + "' "
+    sql = "SELECT * FROM eremit_db.user_wallet WHERE user_id = '" + userId + "' AND currency_code = '" + currrency_code + "' "
     data = db().select(sql)
     return data
 
 # get wallet details basing on wallet id
 def get_user_wallet_details(walletId):
-    sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + str(walletId) + "' "
+    sql = "SELECT * FROM eremit_db.user_wallet WHERE wallet_id = '" + str(walletId) + "' "
     data = db().select(sql)
     return data
 
 # geet user details by userID
 def get_userDetails(userId):
-    sql = "SELECT * FROM `user` WHERE user_id = '" + str(userId) + "' "
+    sql = "SELECT * FROM eremit_db.user WHERE user_id = '" + str(userId) + "' "
     data = db().select(sql)
     return data
 
