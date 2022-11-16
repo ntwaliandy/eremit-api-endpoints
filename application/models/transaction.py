@@ -13,7 +13,7 @@ from random import randint
 from application.libs.sms import on_finish
 from application.libs.sms import sms
 import africastalking
-# from rave_python import Rave
+from stellar_sdk import Keypair
 
 
 class Transaction:

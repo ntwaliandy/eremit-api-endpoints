@@ -16,6 +16,8 @@ from application.models.auth import token_required
 import africastalking
 import os
 from application.libs.aws import s3, bucketName
+from stellar_sdk import Keypair
+import requests
 
 
 
@@ -35,7 +37,7 @@ class User:
     @staticmethod
     def userAdd():
         try:
-            _user_id = uuid.uuid4()
+            _user_id = str(uuid.uuid4())
             _json = request.json
             _first_name = _json['first_name']
             _last_name = _json['last_name']
@@ -58,23 +60,33 @@ class User:
                 
             otp_generated = randint(0000,9999)
 
-            #sending otp using africa stalking on user adding
+            # creating account on stellar
+            pair = Keypair.random()
+            pubKey = str(pair.public_key)
+            secKey = str(pair.secret)
+
+            response = requests.get(f"https://friendbot.stellar.org?addr={pubKey}")
+            if response.status_code == 200:
+                #sending otp using africa stalking on user adding
+                
+                sms.send(str(otp_generated) + " " + "is the otp to verify your userdetails on clic. Generated otp doesnt expire unless used ", [_phone_number], callback=on_finish)
+
+                status = 'pending'
+                otp_sent = send(otp_generated, _email)
+                addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "pub_key": pubKey, "sec_key": secKey, "status": status}
+                print(addUser_dict)
+                data = db().insert('eremit_db.user', **addUser_dict)
+                print(data)
+
+                print(response)
+                
+                final_response = make_response(100, "user created successfully!")
+                return final_response
+            else:
+                final_response = make_response(403, response.text)
+                return response
+
             
-            sms.send(str(otp_generated) + " " + "is the otp to verify your userdetails on clic. Generated otp doesnt expire unless used ", [_phone_number], callback=on_finish)
-
-            status = 'pending'
-            otp_sent = send(otp_generated, _email)
-            print("start")
-            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "status": status}
-            print(addUser_dict)
-            data = db().insert('eremit_db.user', **addUser_dict)
-            print(data)
-
-            
-            response = make_response(100, otp_sent)
-            print(response)
-
-            return response
         except Exception as e:
             print(e)
             response = make_response(403, "Invalid data types")
