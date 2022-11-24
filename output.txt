@@ -1,1 +1,1 @@
-UPDATE user SET profile_pic=%s WHERE user_id  =  '4a10fc12-fe1c-4cc0-b539-ffaaafd6b5b9'
+UPDATE eremit_db.user SET status=%s WHERE user_id  =  '7ed70414-9aab-4305-a224-5b53ac6d9883'

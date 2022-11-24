@@ -16,7 +16,7 @@ from application.models.auth import token_required
 import africastalking
 import os
 from application.libs.aws import s3, bucketName
-from stellar_sdk import Keypair
+from stellar_sdk import Keypair, Server
 import requests
 
 
@@ -29,7 +29,7 @@ class User:
 
     @staticmethod
     def all_users():
-        sql = "SELECT * FROM eremit_db.user "
+        sql = "SELECT * FROM eremit_db.user"
         data = db().select(sql)
         return jsonify(data)
 
@@ -66,6 +66,7 @@ class User:
             secKey = str(pair.secret)
 
             response = requests.get(f"https://friendbot.stellar.org?addr={pubKey}")
+            print(response)
             if response.status_code == 200:
                 #sending otp using africa stalking on user adding
                 
@@ -111,11 +112,20 @@ class User:
                 return response
             status = 'Active'
             _user_id = check_user[0]['user_id']
+            _pubKey = check_user[0]['pub_key']
+            server = Server("https://horizon-testnet.stellar.org")
+            account = server.accounts().account_id(_pubKey).call()
+            for acc in account['balances']:
+                acc_id = account['account_id']
+                asset_code = acc['asset_type']
+                asset_balance = acc['balance']
+                create_user_wallet = UserWallet.createWallet(acc_id, _user_id, asset_code, asset_balance)
 
             updatedUser_dict = {"status": status}
-            db().Update('eremit_db.user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
+            db().Update('eremit_db.user', "user_id  =  '" + _user_id + "'", **updatedUser_dict)
 
-            create_user_wallet = UserWallet.createWallet(_user_id)
+            
+
             userData = get_user_details_by_id(_user_id)
 
             # generating jwt for user sessions
@@ -125,7 +135,7 @@ class User:
             },
                 application.config['SECRET_KEY'])
 
-            response = user_created_response(100, "user created successfully", userData, token.decode())
+            response = user_created_response(100, "user created successfully", userData, token)
             return response
 
         except Exception as e:

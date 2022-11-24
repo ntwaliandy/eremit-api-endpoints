@@ -11,13 +11,13 @@ class UserWallet:
     # create user wallet
 
     @staticmethod
-    def createWallet(userId):
+    def createWallet(walletID,userId, assetCode, balance):
         try:
 
-            _wallet_id = uuid.uuid4()
+            _wallet_id = walletID
             _user_id = userId
-            _balance = 0
-            _currency_code = "USD"
+            _balance = balance
+            _currency_code = assetCode
 
             addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
             data = db().insert('eremit_db.user_wallet', **addWallet_dict)
