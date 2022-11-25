@@ -1,1 +1,1 @@
-UPDATE eremit_db.user SET status=%s WHERE user_id  =  '7ed70414-9aab-4305-a224-5b53ac6d9883'
+UPDATE eremit_db.transaction SET status=%s, reason=%s WHERE transaction_id = 'c6b8ffc1-cd22-4f91-8884-ff6b21e8d823' 

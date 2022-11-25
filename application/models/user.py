@@ -101,6 +101,8 @@ class User:
             _email = _json['email']
             _requested_otp = _json['otp']
 
+            print(_requested_otp)
+
             check_user = get_user_by_email(_email)
             if len(check_user) <= 0:
                 response = make_response(403, "Wrong Email")
@@ -112,14 +114,6 @@ class User:
                 return response
             status = 'Active'
             _user_id = check_user[0]['user_id']
-            _pubKey = check_user[0]['pub_key']
-            server = Server("https://horizon-testnet.stellar.org")
-            account = server.accounts().account_id(_pubKey).call()
-            for acc in account['balances']:
-                acc_id = account['account_id']
-                asset_code = acc['asset_type']
-                asset_balance = acc['balance']
-                create_user_wallet = UserWallet.createWallet(acc_id, _user_id, asset_code, asset_balance)
 
             updatedUser_dict = {"status": status}
             db().Update('eremit_db.user', "user_id  =  '" + _user_id + "'", **updatedUser_dict)
@@ -135,7 +129,9 @@ class User:
             },
                 application.config['SECRET_KEY'])
 
-            response = user_created_response(100, "user created successfully", userData, token)
+            print(token)
+
+            response = user_created_response(100, "user created successfully", userData, token.decode())
             return response
 
         except Exception as e:
