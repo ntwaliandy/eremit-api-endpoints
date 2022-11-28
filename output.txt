@@ -1,1 +1,1 @@
-UPDATE user SET profile_pic=%s WHERE user_id  =  '4a10fc12-fe1c-4cc0-b539-ffaaafd6b5b9'
+UPDATE user SET status=%s WHERE user_id  =  '7700a043-fcec-4b4f-b9e7-2df5e7ed7799'

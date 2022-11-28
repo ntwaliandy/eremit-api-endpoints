@@ -3,6 +3,11 @@ import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 from application.models.auth import token_required
+from stellar_sdk import Keypair
+import requests
+from stellar_sdk import Server
+
+
 
 class UserWallet:
     def __init__(self):
@@ -13,13 +18,41 @@ class UserWallet:
     @staticmethod
     def createWallet(userId):
         try:
+            #getting key pairs
+            pair = Keypair.random()
+            print(f"Secret key: {pair.secret}")
+            secret_key = {pair.secret}
+            print(secret_key)
 
-            _wallet_id = uuid.uuid4()
+            print(f"Public Key: {pair.public_key}")
+            public_key = pair.public_key
+            print(public_key)
+
+            #creating account stellar
+            print(public_key)
+            response = requests.get(f"https://friendbot.stellar.org?addr={public_key}")
+            print(response)
+            if response.status_code == 200:
+                print(f"SUCCESS! You have a new account :)\n{response.text}")
+            else:
+                print(f"ERROR! Response: \n{response.text}")
+
+            #checking account balance
+            server = Server("https://horizon-testnet.stellar.org")
+            public_key = public_key
+            account = server.accounts().account_id(public_key).call()
+            for balance in account['balances']:
+                print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
+
+
+            _wallet_id = public_key
+            _wallet_secret = secret_key
             _user_id = userId
-            _balance = 0
-            _currency_code = "USD"
+            _balance = {balance['balance']}
+            _currency_code = {balance['asset_type']}
+            print(_wallet_secret)
 
-            addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
+            addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id, "wallet_secret": secret_key}
             data = db().insert('user_wallet', **addWallet_dict)
 
             return _wallet_id

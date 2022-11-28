@@ -16,6 +16,9 @@ from application.models.auth import token_required
 import africastalking
 import os
 from application.libs.aws import s3, bucketName
+# from stellar_sdk import Keypair
+# import requests
+# from stellar_sdk import Server
 
 
 
@@ -48,6 +51,7 @@ class User:
             print(_phone_number)
             # hash password
             hash_password = hashlib.sha256(str(_password).encode('utf-8')).hexdigest()
+
             check_user = get_user_detail(_email, _phone_number)
             if len(check_user) > 0:
                 return make_response(403, "User Already Exists")
@@ -80,7 +84,7 @@ class User:
             response = make_response(403, "Invalid data types")
             return response
 
-    # verify otp
+    # verify otp for adding user
     @staticmethod
     def verifyOTP():
         try:
@@ -97,6 +101,33 @@ class User:
             if _requested_otp != otp:
                 response = make_response(403, "Invalid OTP")
                 return response
+            
+            # #getting key pairs
+            # pair = Keypair.random()
+            # print(f"Secret key: {pair.secret}")
+            # secret_key = {pair.secret}
+            # print(secret_key)
+
+            # print(f"Public Key: {pair.public_key}")
+            # public_key = pair.public_key
+            # print(public_key)
+
+            # #creating account stellar
+            # print(public_key)
+            # response = requests.get(f"https://friendbot.stellar.org?addr={public_key}")
+            # print(response)
+            # if response.status_code == 200:
+            #     print(f"SUCCESS! You have a new account :)\n{response.text}")
+            # else:
+            #     print(f"ERROR! Response: \n{response.text}")
+
+            # #checking account balance
+            # server = Server("https://horizon-testnet.stellar.org")
+            # public_key = public_key
+            # account = server.accounts().account_id(public_key).call()
+            # for balance in account['balances']:
+            #     print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
+
             status = 'Active'
             _user_id = check_user[0]['user_id']
 
@@ -105,6 +136,7 @@ class User:
 
             create_user_wallet = UserWallet.createWallet(_user_id)
             userData = get_user_details_by_id(_user_id)
+            print(userData)
 
             # generating jwt for user sessions
             token = jwt.encode({
