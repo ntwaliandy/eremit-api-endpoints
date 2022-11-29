@@ -14,3 +14,13 @@ def verifySinglePayment():
 def sendSinglePayment():
     data = Transaction.sendSinglePayment()
     return data
+
+@bp_app.route("/verify_path_payment", methods=['POST'])
+def verifyPathPayment():
+    data = Transaction.VerifySendPathPayment()
+    return data
+
+@bp_app.route("/send_path_payment", methods=['POST'])
+def sendPathPayment():
+    data = Transaction.sendPathPayment()
+    return data

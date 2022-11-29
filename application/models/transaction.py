@@ -115,7 +115,112 @@ class Transaction:
 
 
 
+    # verifying path payment
+    def VerifySendPathPayment():
+        try:
+            _json = request.json
+            _userId = _json['user_id']
+            _receiverUsername = _json['receiver_userName']
+            _amount = _json['amount']
+            _senderAssetCode = _json['sender_assetCode']
+            _receiverAssetCode = _json['receiver_assetCode']
 
+
+            server = Server(horizon_url="https://horizon-testnet.stellar.org")
+
+            # checking amount
+            if _amount <= 0:
+                response = make_response(403, "LESS AMOUNT TO TRANSFER")
+                return response
+
+            # checking sending user
+            check_sender_user = get_user_by_id(_userId)
+            if len(check_sender_user) <= 0:
+                response = make_response(403, "INVALID SENDER")
+
+            # check receiving user
+            check_receiver_user = get_user_by_username(_receiverUsername)
+            if len(check_receiver_user) <= 0:
+                response = make_response(403, "INVALID RECEIVER")
+                return response
+
+            _senderPubKey = check_sender_user[0]['pub_key']
+            _senderSecKey = check_sender_user[0]['sec_key']
+
+            _receiverPubKey = check_receiver_user[0]['pub_key']
+            _receiverSecKey = check_receiver_user[0]['sec_key']
+
+            sender_account = server.load_account(_senderPubKey)
+            _senderAccountID = sender_account.account.account_id
+
+            receiver_account = server.load_account(_receiverPubKey)
+            _receiverAccountID = receiver_account.account.account_id
+
+            response = make_response(100, {
+                "senderPubKey": _senderPubKey,
+                "senderSecKey": _senderSecKey,
+                "senderAssetCode": _senderAssetCode,
+                "senderAccountID": _senderAccountID,
+                "receiverPubKey": _receiverPubKey,
+                "receiverSecKey": _receiverSecKey,
+                "receiverAssetCode": _receiverAssetCode,
+                "receiverAccountID": _receiverAccountID,
+                "amount": _amount
+            })
+            return response
+
+        except Exception as e:
+            response = make_response(403, str(e))
+            return response
+
+    # send path payment
+    def sendPathPayment():
+        try:
+            _json = request.json
+            _amount = _json['amount']
+            _senderPubKey = _json['sender_pubKey']
+            _senderSecKey = _json['sender_secKey']
+            _senderAssetCode = _json['sender_assetCode']
+            _senderAccountId = _json['sender_accountId']
+            _receiverPubKey = _json['receiver_pubKey']
+            _receiverSecKey = _json['receiver_secKey']
+            _receiverAssetCode = _json['receiver_assetCode']
+            _receiverAccountId = _json['receiver_accountId']
+
+
+            server = Server(horizon_url="https://horizon-testnet.stellar.org")
+            source_account = server.load_account(_senderPubKey)
+            
+            transaction = (
+                TransactionBuilder(
+
+                source_account=source_account,
+                network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+                base_fee=100,
+                ).append_path_payment_strict_receive_op(
+                destination=_receiverPubKey,
+                send_asset=Asset.native(),
+                send_max=str(_amount),
+                dest_asset=Asset("USD", "GC4MQOLFBOGBZ4GBNF7K7E56QUKNNX3BD4VREWMPDPHHUCABFNRS2A23"),
+                dest_amount="5.50",
+                path=[
+                    Asset("USD", "GC4MQOLFBOGBZ4GBNF7K7E56QUKNNX3BD4VREWMPDPHHUCABFNRS2A23"),
+                    Asset("EUR", "GCHOAJINSPAMUEHGD2NEPUXU7OD4ZQMJOR3JCMGKXYDCEOU4AXDBZ2FA")
+                ]
+                ).set_timeout(30).build()
+                
+                )
+
+            transaction.sign(_senderSecKey)
+            res = server.submit_transaction(transaction)
+
+            print(res)
+
+            response = make_response(100, "success")
+
+        except Exception as e:
+            response = make_response(403, str(e))
+            return response
 
 
 
