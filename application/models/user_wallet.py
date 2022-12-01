@@ -6,6 +6,7 @@ from application.models.auth import token_required
 from stellar_sdk import Keypair
 import requests
 from stellar_sdk import Server
+from stellar_sdk import Asset
 
 
 
@@ -16,43 +17,18 @@ class UserWallet:
     # create user wallet
 
     @staticmethod
-    def createWallet(userId):
+    def createWallet(userId, acc_id, asset_code, asset_balance):
         try:
-            #getting key pairs
-            pair = Keypair.random()
-            print(f"Secret key: {pair.secret}")
-            secret_key = {pair.secret}
-            print(secret_key)
-
-            print(f"Public Key: {pair.public_key}")
-            public_key = pair.public_key
-            print(public_key)
-
-            #creating account stellar
-            print(public_key)
-            response = requests.get(f"https://friendbot.stellar.org?addr={public_key}")
-            print(response)
-            if response.status_code == 200:
-                print(f"SUCCESS! You have a new account :)\n{response.text}")
-            else:
-                print(f"ERROR! Response: \n{response.text}")
-
-            #checking account balance
-            server = Server("https://horizon-testnet.stellar.org")
-            public_key = public_key
-            account = server.accounts().account_id(public_key).call()
-            for balance in account['balances']:
-                print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
+            
 
 
-            _wallet_id = public_key
-            _wallet_secret = secret_key
+            _wallet_id = acc_id
             _user_id = userId
-            _balance = {balance['balance']}
-            _currency_code = {balance['asset_type']}
-            print(_wallet_secret)
+            _balance = asset_balance
+            _currency_code = asset_code
+        
 
-            addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id, "wallet_secret": secret_key}
+            addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
             data = db().insert('user_wallet', **addWallet_dict)
 
             return _wallet_id
@@ -70,7 +46,7 @@ class UserWallet:
             _user_id = _json['user_id']
             _currency_code = _json['currency_code']
             balance = 0.0
-            _wallet_id = uuid.uuid4()
+            _wallet_id = _json['asset_issuer']
 
             # check if user exists
             check_user = get_user_details(_user_id)
@@ -83,6 +59,21 @@ class UserWallet:
             if len(check_wallet) > 0:
                 response = make_response(403, "wallet type already exits")
                 return response
+
+            # Creates TEST asset issued by GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB
+            test_asset = Asset(_currency_code, _wallet_id)
+            is_native = test_asset.is_native()  # False
+            # Creates Google stock asset issued by GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB
+            # google_stock_asset = Asset('US38259P7069', 'GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB')
+            # google_stock_asset_type = google_stock_asset.type  # credit_alphanum12
+            
+             #checking account balance
+            server = Server("https://horizon-testnet.stellar.org")
+            public_key = _wallet_id
+            account = server.accounts().account_id(public_key).call()
+            for balance in account['balances']:
+                print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
+            
 
             other_wallet_dict = {"user_id": _user_id, "wallet_id": _wallet_id, "balance": balance, "currency_code": _currency_code}
 

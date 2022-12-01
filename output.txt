@@ -1,1 +1,1 @@
-UPDATE user SET status=%s WHERE user_id  =  '7700a043-fcec-4b4f-b9e7-2df5e7ed7799'
+UPDATE user SET status=%s, public_key=%s, secret_key=%s WHERE user_id  =  'bfaed5f1-eee5-42c8-bbc0-3e80250c0d8f'

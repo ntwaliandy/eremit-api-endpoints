@@ -16,9 +16,9 @@ from application.models.auth import token_required
 import africastalking
 import os
 from application.libs.aws import s3, bucketName
-# from stellar_sdk import Keypair
-# import requests
-# from stellar_sdk import Server
+from stellar_sdk import Keypair
+import requests
+from stellar_sdk import Server
 
 
 
@@ -47,6 +47,9 @@ class User:
             _email = _json['email']
             _password = _json['password']
             _profile_pic = 'null'
+            _public_key = 'null'
+            _secret_key = 'null'
+
             
             print(_phone_number)
             # hash password
@@ -69,7 +72,7 @@ class User:
             status = 'pending'
             otp_sent = send(otp_generated, _email)
             print("start")
-            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "status": status}
+            addUser_dict = {"user_id": _user_id, "first_name": _first_name, "last_name": _last_name, "phone_number": _phone_number, "email": _email, "username": _username, "password": hash_password, "profile_pic": _profile_pic, "otp": otp_generated, "public_key": _public_key, "secret_key": _secret_key, "status": status}
             print(addUser_dict)
             data = db().insert('user', **addUser_dict)
             print(data)
@@ -128,13 +131,45 @@ class User:
             # for balance in account['balances']:
             #     print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
 
+            
             status = 'Active'
             _user_id = check_user[0]['user_id']
 
-            updatedUser_dict = {"status": status}
+            #getting key pairs
+            pair = Keypair.random()
+            print(f"Secret key: {pair.secret}")
+            secret_key = {pair.secret}
+            print(secret_key)
+
+            print(f"Public Key: {pair.public_key}")
+            public_key = pair.public_key
+            print(public_key)
+
+            #creating account stellar
+            print(public_key)
+            response = requests.get(f"https://friendbot.stellar.org?addr={public_key}")
+            print(response)
+            if response.status_code == 200:
+                print(f"SUCCESS! You have a new account :)\n{response.text}")
+            else:
+                print(f"ERROR! Response: \n{response.text}")
+
+            #checking account balance
+            server = Server("https://horizon-testnet.stellar.org")
+            public_key = public_key
+            account = server.accounts().account_id(public_key).call()
+            for balance in account['balances']:
+                acc_id = account['account_id']
+                
+                
+                print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
+                asset_balance = {balance['balance']}
+                asset_code = {balance['asset_type']}
+
+            updatedUser_dict = {"status": status, "public_key": public_key, "secret_key": secret_key}
             db().Update('user', "user_id  =  '" + str(_user_id) + "'", **updatedUser_dict)
 
-            create_user_wallet = UserWallet.createWallet(_user_id)
+            create_user_wallet = UserWallet.createWallet(_user_id, acc_id, asset_code, asset_balance)
             userData = get_user_details_by_id(_user_id)
             print(userData)
 
