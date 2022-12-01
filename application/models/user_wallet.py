@@ -26,8 +26,8 @@ class UserWallet:
             _currency_code = asset_code
         
 
-            addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
-            data = db().insert('user_wallet', **addWallet_dict)
+            # addWallet_dict = {"user_id": _user_id, "balance": _balance, "currency_code": _currency_code, "wallet_id": _wallet_id}
+            # data = db().insert('user_wallet', **addWallet_dict)
 
             return _wallet_id
         except Exception as e:
