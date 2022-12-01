@@ -3,10 +3,8 @@ import uuid
 from flask import jsonify, request
 from helper.dbhelper import Database as db
 from application.models.auth import token_required
-from stellar_sdk import Keypair
 import requests
-from stellar_sdk import Server
-from stellar_sdk import Asset
+from stellar_sdk import Asset, Keypair, Network, Server, TransactionBuilder
 
 
 
@@ -44,46 +42,48 @@ class UserWallet:
         try:
             _json = request.json
             _user_id = _json['user_id']
-            _currency_code = _json['currency_code']
-            balance = 0.0
-            _wallet_id = _json['asset_issuer']
+            _assetCode = _json['asset_code']
+            _assetIssuer = _json['asset_issuer']
 
             # check if user exists
-            check_user = get_user_details(_user_id)
+            check_user = get_userDetails(_user_id)
+            print(check_user)
             if len(check_user) <= 0:
                 response = make_response(403, "invalid user")
                 return response
-
-            # check user wallet if it already exists
-            check_wallet = check_user_currency(_user_id, _currency_code)
-            if len(check_wallet) > 0:
-                response = make_response(403, "wallet type already exits")
-                return response
-
-            # Creates TEST asset issued by GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB
-            test_asset = Asset(_currency_code, _wallet_id)
-            is_native = test_asset.is_native()  # False
-            # Creates Google stock asset issued by GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB
-            # google_stock_asset = Asset('US38259P7069', 'GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB')
-            # google_stock_asset_type = google_stock_asset.type  # credit_alphanum12
             
-             #checking account balance
-            server = Server("https://horizon-testnet.stellar.org")
-            public_key = _wallet_id
-            account = server.accounts().account_id(public_key).call()
-            for balance in account['balances']:
-                print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
-            
+            _publicKey = check_user[0]['public_key']
+            _secretKey = check_user[0]['secret_key']
 
-            other_wallet_dict = {"user_id": _user_id, "wallet_id": _wallet_id, "balance": balance, "currency_code": _currency_code}
+            server = Server(horizon_url="https://horizon-testnet.stellar.org")
+            # using test-network
+            network_passphrase = Network.TESTNET_NETWORK_PASSPHRASE
 
-            db().insert('user_wallet', **other_wallet_dict)
+            # adding a wallet
+            issuing_asset = Asset(_assetCode, _assetIssuer)
 
-            response = make_response(100, "New Wallet created successfully")
+            # checking if distributor account exists
+            distributor_account = server.load_account(_publicKey)
+
+            # trusting the asset
+            trust_transaction = (
+                TransactionBuilder(
+                    source_account=distributor_account,
+                    network_passphrase=network_passphrase,
+                    base_fee=100,
+                ).append_change_trust_op(asset=issuing_asset, limit="1000").set_timeout(100).build()
+            )
+
+            trust_transaction.sign(_secretKey)
+            trust_transaction_resp = server.submit_transaction(trust_transaction)
+            print(trust_transaction_resp)
+            data = trust_transaction_resp
+
+            response = make_response(100, "New Wallet created successfully", data)
             return response
         except Exception as e:
             print(e)
-            response = make_response(403, "failed to create a new wallet")
+            response = make_response(403, "failed to create a new wallet", data)
             return response
 
             
@@ -132,16 +132,23 @@ class UserWallet:
             _json = request.json
             _user_id = _json['user_id']
 
-            data = get_user_details(_user_id)
-            response = jsonify(data)
-            if len(data) <= 0:
-                print(data)
-                return make_response(403, "No wallet for User ID " + str(_user_id) + "!")
+            check_user = get_userDetails(_user_id)
+            if len(check_user) <= 0:
+                response = make_response(403, "INVALID USER")
+                return response
+
+            _public_key = check_user[0]['public_key']
+
+            # checking user stellar wallets
+            server = Server("https://horizon-testnet.stellar.org")
+            account = server.accounts().account_id(_public_key).call()
+            balances = account['balances']
+            response = user_response(100, balances)
             return response
 
         except Exception as e:
             print(e)
-            response = make_response(403, "syntax error")
+            response = user_response(403, "syntax error")
             return response
 
     
@@ -170,7 +177,11 @@ class UserWallet:
 
 
 # responses
-def make_response(status, message):
+def make_response(status, message, data):
+    return jsonify({"message": message, "status": status, "data": data})
+
+# responses
+def user_response(status, message):
     return jsonify({"message": message, "status": status})
 
 
