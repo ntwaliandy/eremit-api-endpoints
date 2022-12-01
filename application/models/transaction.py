@@ -32,12 +32,12 @@ class Transaction:
             _from_account = _json['from_account']
             _to_account = _json['to_account']
             _transaction_id = uuid.uuid4()
-            _transaction_type = _json['trans_type']
+            # _transaction_type = _json['trans_type']
             _amount = _json['amount']
-            _reason = _json['reason']
+            # _reason = _json['reason']
 
-            _statusTo = "debit" 
-            _statusFrom = "credit"
+            # _statusTo = "debit" 
+            # _statusFrom = "credit"
 
             
 
@@ -69,7 +69,7 @@ class Transaction:
                 )
                     # Because Stellar allows transaction in many currencies, you must specify the asset type.
                     # Here we are sending Lumens.
-                    .append_payment_op(destination=destination_id, asset=Asset.native(), amount="40")
+                    .append_payment_op(destination=destination_id, asset=Asset.native(), amount=_amount)
                     # A memo allows you to add your own metadata to a transaction. It's
                     # optional and does not affect how Stellar treats the transaction.
                     .add_text_memo("Test Transaction")
@@ -83,171 +83,76 @@ class Transaction:
 
             try:
                 # And finally, send it off to Stellar!
-                response = server.submit_transaction(transaction)
-                print(f"Response: {response}")
+                data = server.submit_transaction(transaction)
+                print(f"Response: {data}")
+                
             except (BadRequestError, BadResponseError) as err:
                 print(f"Something went wrong!\n{err}")
 
-            #checking for private and public key
-            check_from_user = get_walletDetailsBy_walletSecret(_from_account)
-            from_publicKey = check_from_user[0]['wallet_id']
-            print(from_publicKey)
-            check_to_user = get_walletDetailsBy_walletId(_to_account)
-            to_secretKey = check_to_user[0]['wallet_secret']
-            print(to_secretKey)
-            # _json = request.json
-            # _transaction_id = uuid.uuid4()
-            # _from_account = _json['from_account']
-            # _to_account = _json['to_account']
-            # _transaction_type = _json['trans_type']
-            # _receiver_money = _json['receiver_money']
-            # _amount = _json['amount']
-            # _reason = _json['reason']
-
-            # _statusTo = "debit" 
-            # _statusFrom = "credit"
-            # #sending payment using stellar
-            # #_statusFrom = "credit"
-            # # _statusTo = "debit"
-            # check_from_user = get_walletDetailsBy_walletId(_from_account)
-            # from_secretKey = check_from_user[0]['secret_key']
-            # print(from_secretKey)
+            # #checking for private and public key
+            # check_from_user = get_walletDetailsBy_walletSecret(_from_account)
+            # from_publicKey = check_from_user[0]['wallet_id']
+            # print(from_publicKey)
             # check_to_user = get_walletDetailsBy_walletId(_to_account)
-            # to_secretKey = check_to_user[0]['secret_key']
+            # to_secretKey = check_to_user[0]['wallet_secret']
             # print(to_secretKey)
-            # if len(check_from_user) <= 0:
-            #     response = make_response(403, "Invalid sender account")
-            #     return response
-            # if len(check_to_user) <= 0:
-            #     response = make_response(403, "invalid receiver account")
-            #     return response
+
+            # from_userId = check_from_user[0]['user_id']
+            # from_currency = check_from_user[0]['currency_code']
+            # check_from_personal_account = check_user_by_id(from_userId)
+            # from_email = check_from_personal_account[0]['email']
+            # from_first_name = check_from_personal_account[0]['first_name']
+            # from_last_name = check_from_personal_account[0]['last_name']
+
+            # to_userId = check_to_user[0]['user_id']
+            # to_currency = check_to_user[0]['currency_code']
+            # check_to_personal_account = check_user_by_id(to_userId)
+            # to_email = check_to_personal_account[0]['email']
+            # to_first_name = check_to_personal_account[0]['first_name']
+            # to_last_name = check_to_personal_account[0]['last_name']
+
+            # #_checking_from_net_balance
             # server = Server("https://horizon-testnet.stellar.org")
-            # source_key = Keypair.from_secret(from_secretKey)
-            # destination_id = _to_account
+            # public_key = from_publicKey
+            # account = server.accounts().account_id(public_key).call()
+            # for balance in account['balances']:
+            #     print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
 
-            # # First, check to make sure that the destination account exists.
-            # # You could skip this, but if the account does not exist, you will be charged
-            # # the transaction fee when the transaction fails.
-            # try:
-            #     server.load_account(destination_id)
-            # except NotFoundError:
-            #     # If the account is not found, surface an error message for logging.
-            #     raise Exception("The destination account does not exist!")
-
-            # # If there was no error, load up-to-date information on your account.
-            # source_account = server.load_account(source_key.public_key)
-            # print(source_account)
-
-            # # Let's fetch base_fee from network
-            # base_fee = server.fetch_base_fee()
-
-            # # Start building the transaction.
-            # transaction = (
-            #     TransactionBuilder(
-            #         source_account=source_account,
-            #         network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
-            #         base_fee=base_fee,
-            #     )
-            #         # Because Stellar allows transaction in many currencies, you must specify the asset type.
-            #         # Here we are sending Lumens.
-            #         .append_payment_op(destination=destination_id, asset=Asset.native(), amount=_receiver_money)
-            #         # A memo allows you to add your own metadata to a transaction. It's
-            #         # optional and does not affect how Stellar treats the transaction.
-            #         .add_text_memo("Test Transaction")
-            #         # Wait a maximum of three minutes for the transaction
-            #         .set_timeout(10)
-            #         .build()
-            # )
-
-            # # Sign the transaction to prove you are actually the person sending it.
-            # transaction.sign(source_key)
-
-            # try:
-            #     # And finally, send it off to Stellar!
-            #     response = server.submit_transaction(transaction)
-            #     print(f"Response: {response}")
-            # except (BadRequestError, BadResponseError) as err:
-            #     print(f"Something went wrong!\n{err}")
-
-            # # _statusFrom = "credit"
-            # # _statusTo = "debit"
-            # # check_from_user = get_walletDetailsBy_walletId(_from_account)
-            # # check_to_user = get_walletDetailsBy_walletId(_to_account)
-            # # if len(check_from_user) <= 0:
-            # #     response = make_response(403, "Invalid sender account")
-            # #     return response
-            # # if len(check_to_user) <= 0:
-            # #     response = make_response(403, "invalid receiver account")
-            # #     return response
-
-            # # if _amount <= 0:
-            # #     response = make_response(403, "less amount to transfer")
-            # # if check_from_user == check_to_user:
-            # #     response = make_response(403, "You can't send money to yourself plz!")
-            # #     return response
-
-            # # check_from_balance = check_from_user[0]['balance']
+            # _from_net_balance = {balance['balance']}
+            # fromupdate_dict = {"balance": _from_net_balance}
+            # db().Update('user_wallet', "wallet_id = '" + str(from_publicKey) + "'", **fromupdate_dict)
             
-            # # if check_from_balance < _amount:
-            # #     response = make_response(403, "Not enough funds to make this transaction")
-            # #     return response
+            # create_from_transaction_dict = {"transaction_id": _transaction_id, "from_account": from_publicKey, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusFrom}
+            # db().insert('transaction', **create_from_transaction_dict)
 
-            from_userId = check_from_user[0]['user_id']
-            from_currency = check_from_user[0]['currency_code']
-            check_from_personal_account = check_user_by_id(from_userId)
-            from_email = check_from_personal_account[0]['email']
-            from_first_name = check_from_personal_account[0]['first_name']
-            from_last_name = check_from_personal_account[0]['last_name']
+            # #checking to_net_balance
+            # server = Server("https://horizon-testnet.stellar.org")
+            # public_key = _to_account
+            # account = server.accounts().account_id(public_key).call()
+            # for balance in account['balances']:
+            #     print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
 
-            to_userId = check_to_user[0]['user_id']
-            to_currency = check_to_user[0]['currency_code']
-            check_to_personal_account = check_user_by_id(to_userId)
-            to_email = check_to_personal_account[0]['email']
-            to_first_name = check_to_personal_account[0]['first_name']
-            to_last_name = check_to_personal_account[0]['last_name']
+            # _to_net_balance = {balance['balance']}
+            # toupdate_dict = {"balance": _to_net_balance}
+            # db().Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
 
-            #_checking_from_net_balance
-            server = Server("https://horizon-testnet.stellar.org")
-            public_key = from_publicKey
-            account = server.accounts().account_id(public_key).call()
-            for balance in account['balances']:
-                print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
-
-            _from_net_balance = {balance['balance']}
-            fromupdate_dict = {"balance": _from_net_balance}
-            db().Update('user_wallet', "wallet_id = '" + str(from_publicKey) + "'", **fromupdate_dict)
+            # create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusTo}
+            # db().insert('transaction', **create_to_transaction_dict)
             
-            create_from_transaction_dict = {"transaction_id": _transaction_id, "from_account": from_publicKey, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusFrom}
-            db().insert('transaction', **create_from_transaction_dict)
+            # print(to_last_name)
+            # send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
 
-            #checking to_net_balance
-            server = Server("https://horizon-testnet.stellar.org")
-            public_key = _to_account
-            account = server.accounts().account_id(public_key).call()
-            for balance in account['balances']:
-                print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
+            # #sending sms using africastalking
+            # from_phone_number = check_from_personal_account[0]['phone_number'] 
+            # sms.send("You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name + "login on clic for more details of your transactions", [from_phone_number], callback=on_finish)
 
-            _to_net_balance = {balance['balance']}
-            toupdate_dict = {"balance": _to_net_balance}
-            db().Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
-
-            create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusTo}
-            db().insert('transaction', **create_to_transaction_dict)
+            # send_from_mail = statusMessage(to_email, "You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
             
-            print(to_last_name)
-            send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
+            # #sending sms using africastalking
+            # to_phone_number = check_to_personal_account[0]['phone_number']
+            # sms.send("You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name + "login on clic for more details of your transactions", [to_phone_number], callback=on_finish)
 
-            #sending sms using africastalking
-            from_phone_number = check_from_personal_account[0]['phone_number'] 
-            sms.send("You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name + "login on clic for more details of your transactions", [from_phone_number], callback=on_finish)
-
-            send_from_mail = statusMessage(to_email, "You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
-            
-            #sending sms using africastalking
-            to_phone_number = check_to_personal_account[0]['phone_number']
-            sms.send("You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name + "login on clic for more details of your transactions", [to_phone_number], callback=on_finish)
-
-            response = make_response(100, "transaction statement created")
+            response = make_response(100, "transaction statement created", data)
             return response
 
         except Exception as e:
@@ -812,8 +717,8 @@ class Transaction:
 
 
 # responses
-def make_response(status, message):
-    return jsonify({"message": message, "status": status})
+def make_response(status, message, data):
+    return jsonify({"message": message, "status": status, "data": data})
 
 def get_walletDetailsBy_walletId(walletId):
     sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + walletId + "' "
