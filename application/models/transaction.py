@@ -186,6 +186,7 @@ class Transaction:
             _receiverSecKey = _json['receiver_secKey']
             _receiverAssetCode = _json['receiver_assetCode']
             _receiverAccountId = _json['receiver_accountId']
+            _receiverAmount = _json['receiver_amount']
 
             
 
@@ -204,7 +205,7 @@ class Transaction:
                 send_asset=Asset.native(),
                 send_max=str(_amount),
                 dest_asset= Asset(_receiverAssetCode, _receiverAccountId),
-                dest_amount="8.7",
+                dest_amount=str(_receiverAmount),
                 path=[],
             ).set_timeout(30).build()
 
