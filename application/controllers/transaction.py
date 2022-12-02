@@ -10,6 +10,12 @@ def create_transaction():
     data = Transaction.createTransaction()
     return data
 
+#path payment
+@bp_app.route('/path_payment', methods=['POST'])
+def pathPayment():
+    data = Transaction.pathPayment()
+    return data
+
 @bp_app.route('/all_transactions', methods=['GET'])
 def all_transactions():
     data = Transaction.allTransactions()

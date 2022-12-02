@@ -22,7 +22,7 @@ class Transaction:
     def __init__(self):
         print("transaction model")
 
-    # create user transaction
+    # create user transaction(payment)
     @staticmethod
     @token_required
     def createTransaction():
@@ -89,56 +89,6 @@ class Transaction:
             except (BadRequestError, BadResponseError) as err:
                 print(f"Something went wrong!\n{err}")
 
-            # #checking for private and public key
-            # check_from_user = get_walletDetailsBy_walletSecret(_from_account)
-            # from_publicKey = check_from_user[0]['wallet_id']
-            # print(from_publicKey)
-            # check_to_user = get_walletDetailsBy_walletId(_to_account)
-            # to_secretKey = check_to_user[0]['wallet_secret']
-            # print(to_secretKey)
-
-            # from_userId = check_from_user[0]['user_id']
-            # from_currency = check_from_user[0]['currency_code']
-            # check_from_personal_account = check_user_by_id(from_userId)
-            # from_email = check_from_personal_account[0]['email']
-            # from_first_name = check_from_personal_account[0]['first_name']
-            # from_last_name = check_from_personal_account[0]['last_name']
-
-            # to_userId = check_to_user[0]['user_id']
-            # to_currency = check_to_user[0]['currency_code']
-            # check_to_personal_account = check_user_by_id(to_userId)
-            # to_email = check_to_personal_account[0]['email']
-            # to_first_name = check_to_personal_account[0]['first_name']
-            # to_last_name = check_to_personal_account[0]['last_name']
-
-            # #_checking_from_net_balance
-            # server = Server("https://horizon-testnet.stellar.org")
-            # public_key = from_publicKey
-            # account = server.accounts().account_id(public_key).call()
-            # for balance in account['balances']:
-            #     print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
-
-            # _from_net_balance = {balance['balance']}
-            # fromupdate_dict = {"balance": _from_net_balance}
-            # db().Update('user_wallet', "wallet_id = '" + str(from_publicKey) + "'", **fromupdate_dict)
-            
-            # create_from_transaction_dict = {"transaction_id": _transaction_id, "from_account": from_publicKey, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusFrom}
-            # db().insert('transaction', **create_from_transaction_dict)
-
-            # #checking to_net_balance
-            # server = Server("https://horizon-testnet.stellar.org")
-            # public_key = _to_account
-            # account = server.accounts().account_id(public_key).call()
-            # for balance in account['balances']:
-            #     print(f"Type: {balance['asset_type']}, Balance: {balance['balance']}")
-
-            # _to_net_balance = {balance['balance']}
-            # toupdate_dict = {"balance": _to_net_balance}
-            # db().Update('user_wallet', "wallet_id = '" + str(_to_account) + "'", **toupdate_dict)
-
-            # create_to_transaction_dict = {"transaction_id": _transaction_id, "from_account": _from_account, "to_account": _to_account, "trans_type": _transaction_type, "amount": _amount, "reason": _reason, "status": _statusTo}
-            # db().insert('transaction', **create_to_transaction_dict)
-            
             # print(to_last_name)
             # send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
 
@@ -158,6 +108,68 @@ class Transaction:
         except Exception as e:
             print(e)
             response = make_response(403, "can't make a transaction")
+            return response
+
+    #path payment
+    @staticmethod
+    @token_required
+    def pathPayment():
+        try:
+            _json = request.json
+            _transaction_id = uuid.uuid4()
+            print(_transaction_id)
+            _from_sec = _json['from_secret']
+            path_code1 = _json['path_code1']
+            path_issuer1 = _json['path_issuer1']
+            path_code2 = _json['path_code2']
+            path_issuer2 = _json['path_issuer2']
+            dest_code = _json['dest_code']
+            destination_asset = _json['destination_asset']
+            _amount = _json['amount']
+            
+            
+
+            server = Server(horizon_url="https://horizon-testnet.stellar.org")
+            source_keypair = Keypair.from_secret(
+                _from_sec
+            )
+
+            source_account = server.load_account(account_id=source_keypair.public_key)
+
+            path = [
+                Asset(path_code1, path_issuer1),
+                Asset(path_code2, path_issuer2),
+            ]
+            transaction = (
+                TransactionBuilder(
+                    source_account=source_account,
+                    network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+                    base_fee=100,
+                )
+                .append_path_payment_strict_receive_op(
+                    destination= path_issuer1,
+                    send_asset=Asset.native(),
+                    send_max="1000",
+                    dest_asset=Asset(
+                        dest_code, destination_asset
+                    ),
+                    dest_amount=_amount,
+                    path=path,
+                )
+                .set_timeout(30)
+                .build()
+            )    
+            transaction.sign(source_keypair)
+            res = server.submit_transaction(transaction)
+            print(res)
+
+
+            response = make_response(100, "transaction statement of path payment created", res)
+            return response
+
+        except Exception as e:
+            print(e)
+            response = use_response(403, "can't make a transaction")
             return response
 
     # display all transactions
@@ -212,58 +224,58 @@ class Transaction:
             response = make_response(403, "cant see transactions basing on id")
             return response    
     #verifyng currency
-    # def VerifyCurrency():
-    #     try:
-    #         _json = request.json
-    #         _sender_id = _json['sender_id']
-    #         _currency_code = _json['currency_code']
-    #         _receiver_currency_code = _json['receiver_currency_code']
-    #         _username = _json['username']
-    #         _amount = _json['amount']
+    def VerifyCurrency():
+        try:
+            _json = request.json
+            _sender_id = _json['sender_id']
+            _currency_code = _json['currency_code']
+            _receiver_currency_code = _json['receiver_currency_code']
+            _username = _json['username']
+            _amount = _json['amount']
 
-    #         # checking amount
-    #         if _amount <= 0:
-    #             response = make_response(403, "less amount to transfer")
-    #             return response
+            # checking amount
+            if _amount <= 0:
+                response = make_response(403, "less amount to transfer")
+                return response
                 
-    #         # check user by username
-    #         check_reciever = check_user_by_username(_username)
-    #         if len(check_reciever) <= 0:
-    #             response = make_response(403, "receiver account doesn't Exist")
-    #             return response
+            # check user by username
+            check_reciever = check_user_by_username(_username)
+            if len(check_reciever) <= 0:
+                response = make_response(403, "receiver account doesn't Exist")
+                return response
             
-    #         receiver_id = check_reciever[0]['user_id']
+            receiver_id = check_reciever[0]['user_id']
 
-    #         # checking receiver wallet deatils
-    #         check_reciever_wallets = get_wallet_details(receiver_id, _receiver_currency_code)
-    #         check_sender_wallets = get_wallet_details(_sender_id, _currency_code)
-    #         if len(check_reciever_wallets) <= 0:
-    #             response = make_response(403, "receiver doesn't have " + _receiver_currency_code + " wallet")
-    #             return response
+            # checking receiver wallet deatils
+            check_reciever_wallets = get_wallet_details(receiver_id, _receiver_currency_code)
+            check_sender_wallets = get_wallet_details(_sender_id, _currency_code)
+            if len(check_reciever_wallets) <= 0:
+                response = make_response(403, "receiver doesn't have " + _receiver_currency_code + " wallet")
+                return response
 
-    #         to = _receiver_currency_code
-    #         from_wallet = _currency_code
-    #         url = "https://api.apilayer.com/exchangerates_data/convert?to=" + str(to) + "&from=" + str(from_wallet) + "&amount=" + str(_amount) + ""
-    #         payload = {}
-    #         headers= {
-    #         "apikey": "o7cVMzxBZSiBYsiRtK6Od8H6zFzieYGV"
-    #         }
-    #         response = requests.get(url, headers=headers, data = payload)
-    #         result = response.text
-    #         res = json.loads(result)
+            to = _receiver_currency_code
+            from_wallet = _currency_code
+            url = "https://api.apilayer.com/exchangerates_data/convert?to=" + str(to) + "&from=" + str(from_wallet) + "&amount=" + str(_amount) + ""
+            payload = {}
+            headers= {
+            "apikey": "o7cVMzxBZSiBYsiRtK6Od8H6zFzieYGV"
+            }
+            response = requests.get(url, headers=headers, data = payload)
+            result = response.text
+            res = json.loads(result)
 
-    #         _receiving_money = res['result']
+            _receiving_money = res['result']
             
             
-    #         # receiver wallet_id
-    #         receiver_wallet_id = check_reciever_wallets[0]['wallet_id']
-    #         sender_wallet_id = check_sender_wallets[0]['wallet_id']
-    #         response = make_response(100, {"sender_walletId": sender_wallet_id, "receiver_walletId": receiver_wallet_id, "receiving_money": _receiving_money})
-    #         return response
-    #     except Exception as e:
-    #         print(e)
-    #         response = make_response(403, "can't make this transaction")
-    #         return response
+            # receiver wallet_id
+            receiver_wallet_id = check_reciever_wallets[0]['wallet_id']
+            sender_wallet_id = check_sender_wallets[0]['wallet_id']
+            response = make_response(100, {"sender_walletId": sender_wallet_id, "receiver_walletId": receiver_wallet_id, "receiving_money": _receiving_money})
+            return response
+        except Exception as e:
+            print(e)
+            response = make_response(403, "can't make this transaction")
+            return response
 
     # depositing to or from MM_UGANDA
     def deposit():
@@ -717,8 +729,12 @@ class Transaction:
 
 
 # responses
-def make_response(status, message, data):
-    return jsonify({"message": message, "status": status, "data": data})
+def make_response(status, message, res):
+    return jsonify({"message": message, "status": status, "res": res})
+
+#use response
+def use_response(status, message):
+    return jsonify({"message": message, "status": status})
 
 def get_walletDetailsBy_walletId(walletId):
     sql = "SELECT * FROM `user_wallet` WHERE wallet_id = '" + walletId + "' "
