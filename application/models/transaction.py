@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, json
 import uuid
 from helper.dbhelper import Database as db
 from stellar_sdk import Asset, Keypair, Network, Server, TransactionBuilder
@@ -187,31 +187,28 @@ class Transaction:
             _receiverAssetCode = _json['receiver_assetCode']
             _receiverAccountId = _json['receiver_accountId']
 
+            
 
             server = Server(horizon_url="https://horizon-testnet.stellar.org")
-            source_account = server.load_account(_senderPubKey)
-            
-            transaction = (
-                TransactionBuilder(
+            source_keypair = Keypair.from_secret(_senderSecKey)
 
+            source_account = server.load_account(account_id=_senderPubKey)
+            
+
+            transaction = TransactionBuilder(
                 source_account=source_account,
                 network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
                 base_fee=100,
-                ).append_path_payment_strict_receive_op(
+            ).append_path_payment_strict_receive_op(
                 destination=_receiverPubKey,
                 send_asset=Asset.native(),
                 send_max=str(_amount),
-                dest_asset=Asset("USD", "GC4MQOLFBOGBZ4GBNF7K7E56QUKNNX3BD4VREWMPDPHHUCABFNRS2A23"),
-                dest_amount="5.50",
-                path=[
-                    Asset("USD", "GC4MQOLFBOGBZ4GBNF7K7E56QUKNNX3BD4VREWMPDPHHUCABFNRS2A23"),
-                    Asset("EUR", "GCHOAJINSPAMUEHGD2NEPUXU7OD4ZQMJOR3JCMGKXYDCEOU4AXDBZ2FA")
-                ]
-                ).set_timeout(30).build()
-                
-                )
+                dest_asset= Asset(_receiverAssetCode, _receiverAccountId),
+                dest_amount="8.7",
+                path=[],
+            ).set_timeout(30).build()
 
-            transaction.sign(_senderSecKey)
+            transaction.sign(source_keypair)
             res = server.submit_transaction(transaction)
 
             print(res)
@@ -219,7 +216,8 @@ class Transaction:
             response = make_response(100, "success")
 
         except Exception as e:
-            response = make_response(403, str(e))
+            data = json.loads(str(e))
+            response = make_response(403, data['extras']['result_codes'])
             return response
 
 

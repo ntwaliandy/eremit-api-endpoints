@@ -71,7 +71,7 @@ class UserWallet():
                     source_account=distributor_account,
                     network_passphrase=network_passphrase,
                     base_fee=100,
-                ).append_change_trust_op(asset=issuing_asset, limit="1000").set_timeout(100).build()
+                ).append_change_trust_op(asset=issuing_asset, limit="1000000000").set_timeout(100).build()
             )
 
             trust_transaction.sign(_secKey)
