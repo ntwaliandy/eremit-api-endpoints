@@ -2,6 +2,7 @@ from flask import jsonify, request, json
 import uuid
 from helper.dbhelper import Database as db
 from stellar_sdk import Asset, Keypair, Network, Server, TransactionBuilder
+import requests
 
 
 
@@ -150,21 +151,14 @@ class Transaction:
             _receiverPubKey = check_receiver_user[0]['pub_key']
             _receiverSecKey = check_receiver_user[0]['sec_key']
 
-            sender_account = server.load_account(_senderPubKey)
-            _senderAccountID = sender_account.account.account_id
-
-            receiver_account = server.load_account(_receiverPubKey)
-            _receiverAccountID = receiver_account.account.account_id
 
             response = make_response(100, {
                 "senderPubKey": _senderPubKey,
                 "senderSecKey": _senderSecKey,
                 "senderAssetCode": _senderAssetCode,
-                "senderAccountID": _senderAccountID,
                 "receiverPubKey": _receiverPubKey,
                 "receiverSecKey": _receiverSecKey,
                 "receiverAssetCode": _receiverAssetCode,
-                "receiverAccountID": _receiverAccountID,
                 "amount": _amount
             })
             return response
@@ -181,12 +175,9 @@ class Transaction:
             _senderPubKey = _json['sender_pubKey']
             _senderSecKey = _json['sender_secKey']
             _senderAssetCode = _json['sender_assetCode']
-            _senderAccountId = _json['sender_accountId']
             _receiverPubKey = _json['receiver_pubKey']
             _receiverSecKey = _json['receiver_secKey']
             _receiverAssetCode = _json['receiver_assetCode']
-            _receiverAccountId = _json['receiver_accountId']
-            _receiverAmount = _json['receiver_amount']
 
             
 
@@ -194,19 +185,41 @@ class Transaction:
             source_keypair = Keypair.from_secret(_senderSecKey)
 
             source_account = server.load_account(account_id=_senderPubKey)
-            
+
+            # checking user stellar wallets
+            server = Server("https://horizon-testnet.stellar.org")
+            account = server.accounts().account_id(_receiverPubKey).call()
+            balances = account['balances']
+            assetIss = ""
+            for bal in balances:
+                if bal['asset_type'] != "native":
+                    if _receiverAssetCode == bal['asset_code']:
+                        assetIss = bal['asset_issuer']
+
+                
+            # generate path-payment
+            path_data = requests.get("https://horizon-testnet.stellar.org/paths/strict-send?destination_assets=" + _receiverAssetCode + ":" + assetIss + "&source_asset_type=" + _senderAssetCode + "&source_amount=" + _amount)
+            path_res = path_data.json()
+
+            receiver_amount = path_res['_embedded']['records'][0]['destination_amount']
+            path_assetCode = path_res['_embedded']['records'][0]['path'][0]['asset_code']
+            print(path_assetCode)
+            path_assetIssuer = path_res['_embedded']['records'][0]['path'][0]['asset_issuer']
+            print(path_assetIssuer)
 
             transaction = TransactionBuilder(
                 source_account=source_account,
                 network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
                 base_fee=100,
             ).append_path_payment_strict_receive_op(
-                destination=_receiverPubKey,
-                send_asset=Asset.native(),
-                send_max=str(_amount),
-                dest_asset= Asset(_receiverAssetCode, _receiverAccountId),
-                dest_amount=str(_receiverAmount),
-                path=[],
+                destination= _receiverPubKey,
+                send_asset= Asset(_senderAssetCode, _senderPubKey),
+                send_max=_amount,
+                dest_asset=Asset(_receiverAssetCode, _receiverPubKey),
+                dest_amount=receiver_amount,
+                path=[
+                    Asset(path_assetCode, path_assetIssuer)
+                ]
             ).set_timeout(30).build()
 
             transaction.sign(source_keypair)
@@ -214,7 +227,8 @@ class Transaction:
 
             print(res)
 
-            response = make_response(100, "success")
+            response = make_response(100, "rrerer")
+            return response
 
         except Exception as e:
             data = json.loads(str(e))
