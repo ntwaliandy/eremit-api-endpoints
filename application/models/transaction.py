@@ -32,6 +32,7 @@ class Transaction:
             _from_account = _json['from_account']
             _to_account = _json['to_account']
             _transaction_id = uuid.uuid4()
+            _asset_type = _json['asset_type']
             # _transaction_type = _json['trans_type']
             _amount = _json['amount']
             # _reason = _json['reason']
@@ -69,7 +70,7 @@ class Transaction:
                 )
                     # Because Stellar allows transaction in many currencies, you must specify the asset type.
                     # Here we are sending Lumens.
-                    .append_payment_op(destination=destination_id, asset=Asset.native(), amount=_amount)
+                    .append_payment_op(destination=destination_id, asset=_asset_type, amount=_amount)
                     # A memo allows you to add your own metadata to a transaction. It's
                     # optional and does not affect how Stellar treats the transaction.
                     .add_text_memo("Test Transaction")
@@ -110,68 +111,125 @@ class Transaction:
             response = make_response(403, "can't make a transaction")
             return response
 
-    #path payment
-    @staticmethod
-    @token_required
-    def pathPayment():
+    # verifying path payment
+    def VerifySendPathPayment():
         try:
             _json = request.json
-            _transaction_id = uuid.uuid4()
-            print(_transaction_id)
-            _from_sec = _json['from_secret']
-            path_code1 = _json['path_code1']
-            path_issuer1 = _json['path_issuer1']
-            path_code2 = _json['path_code2']
-            path_issuer2 = _json['path_issuer2']
-            dest_code = _json['dest_code']
-            destination_asset = _json['destination_asset']
+            _userId = _json['user_id']
+            _receiverUsername = _json['receiver_userName']
             _amount = _json['amount']
-            
-            
+            _senderAssetCode = _json['sender_assetCode']
+            _receiverAssetCode = _json['receiver_assetCode']
+
 
             server = Server(horizon_url="https://horizon-testnet.stellar.org")
-            source_keypair = Keypair.from_secret(
-                _from_sec
-            )
 
-            source_account = server.load_account(account_id=source_keypair.public_key)
+            # # checking amount
+            # if _amount <= 0:
+            #     response = make_response(403, "LESS AMOUNT TO TRANSFER")
+            #     return response
 
-            path = [
-                Asset(path_code1, path_issuer1),
-                Asset(path_code2, path_issuer2),
-            ]
-            transaction = (
-                TransactionBuilder(
-                    source_account=source_account,
-                    network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
-                    base_fee=100,
-                )
-                .append_path_payment_strict_receive_op(
-                    destination= path_issuer1,
-                    send_asset=Asset.native(),
-                    send_max="1000",
-                    dest_asset=Asset(
-                        dest_code, destination_asset
-                    ),
-                    dest_amount=_amount,
-                    path=path,
-                )
-                .set_timeout(30)
-                .build()
-            )    
-            transaction.sign(source_keypair)
-            res = server.submit_transaction(transaction)
-            print(res)
+            # checking sending user
+            check_sender_user = check_user_by_id(_userId)
+            if len(check_sender_user) <= 0:
+                response = make_response(403, "INVALID SENDER")
+
+            # check receiving user
+            check_receiver_user = check_user_by_username(_receiverUsername)
+            if len(check_receiver_user) <= 0:
+                response = make_response(403, "INVALID RECEIVER")
+                return response
+
+            _senderPubKey = check_sender_user[0]['public_key']
+            _senderSecKey = check_sender_user[0]['secret_key']
+
+            _receiverPubKey = check_receiver_user[0]['public_key']
+            _receiverSecKey = check_receiver_user[0]['secret_key']
 
 
-            response = make_response(100, "transaction statement of path payment created", res)
+            response = path_response(100, {
+                "senderPubKey": _senderPubKey,
+                "senderSecKey": _senderSecKey,
+                "senderAssetCode": _senderAssetCode,
+                "receiverPubKey": _receiverPubKey,
+                "receiverSecKey": _receiverSecKey,
+                "receiverAssetCode": _receiverAssetCode,
+                "amount": _amount
+            })
             return response
 
         except Exception as e:
-            print(e)
-            response = use_response(403, "can't make a transaction")
+            response = path_response(403, str(e))
             return response
 
+    # send path payment
+    def sendPathPayment():
+        try:
+            _json = request.json
+            _amount = _json['amount']
+            _senderPubKey = _json['sender_pubKey']
+            _senderSecKey = _json['sender_secKey']
+            _senderAssetCode = _json['sender_assetCode']
+            _receiverPubKey = _json['receiver_pubKey']
+            _receiverSecKey = _json['receiver_secKey']
+            _receiverAssetCode = _json['receiver_assetCode']
+
+            
+
+            server = Server(horizon_url="https://horizon-testnet.stellar.org")
+            source_keypair = Keypair.from_secret(_senderSecKey)
+
+            source_account = server.load_account(account_id=_senderPubKey)
+
+            # checking user stellar wallets
+            server = Server("https://horizon-testnet.stellar.org")
+            account = server.accounts().account_id(_receiverPubKey).call()
+            balances = account['balances']
+            assetIss = ""
+            for bal in balances:
+                if bal['asset_type'] != "native":
+                    if _receiverAssetCode == bal['asset_code']:
+                        assetIss = bal['asset_issuer']
+                
+            # generate path-payment
+            path_data = requests.get("https://horizon-testnet.stellar.org/paths/strict-send?destination_assets=" + _receiverAssetCode + ":" + assetIss + "&source_asset_type=" + _senderAssetCode + "&source_amount=" + _amount)
+            path_res = path_data.json()
+
+            receiver_amount = path_res['_embedded']['records'][0]['destination_amount']
+            path_assetCode = path_res['_embedded']['records'][0]['path'][0]['asset_code']
+            print(path_assetCode)
+            path_assetIssuer = path_res['_embedded']['records'][0]['path'][0]['asset_issuer']
+            print(path_assetIssuer)
+
+            
+
+            transaction = TransactionBuilder(
+                source_account=source_account,
+                network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+                base_fee=100,
+            ).append_path_payment_strict_receive_op(
+                destination= _receiverPubKey,
+                send_asset= Asset(_senderAssetCode, _senderPubKey),
+                send_max=_amount,
+                dest_asset=Asset(_receiverAssetCode, _receiverPubKey),
+                dest_amount=receiver_amount,
+                path=[
+                    Asset(path_assetCode, path_assetIssuer)
+                ]
+            ).set_timeout(30).build()
+
+            transaction.sign(source_keypair)
+            res = server.submit_transaction(transaction)
+
+            print(res)
+
+            response = path_response(100, "rrerer")
+            return response
+
+        except Exception as e:
+            data = json.loads(str(e))
+            response = path_response(403, data['extras']['result_codes'])
+            return response
     # display all transactions
     @staticmethod
     @token_required
@@ -731,6 +789,10 @@ class Transaction:
 # responses
 def make_response(status, message, res):
     return jsonify({"message": message, "status": status, "res": res})
+
+#path payment response
+def path_response(status, message):
+    return jsonify({"message": message, "status": status})
 
 #use response
 def use_response(status, message):

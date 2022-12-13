@@ -143,7 +143,8 @@ class UserWallet:
             server = Server("https://horizon-testnet.stellar.org")
             account = server.accounts().account_id(_public_key).call()
             balances = account['balances']
-            response = user_response(100, balances)
+            data = balances
+            response = jsonify(data)
             return response
 
         except Exception as e:
