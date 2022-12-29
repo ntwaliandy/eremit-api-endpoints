@@ -5,9 +5,19 @@ from flask import Response
 bp_app = Blueprint('mod_transaction', __name__)
 
 # create transaction
-@bp_app.route('/send', methods=['POST'])
-def create_transaction():
-    data = Transaction.createTransaction()
+# @bp_app.route('/send', methods=['POST'])
+# def create_transaction():
+#     data = Transaction.createTransaction()
+#     return data
+
+@bp_app.route("/verify_single_payment", methods=['POST'])
+def verifySinglePayment():
+    data = Transaction.verifySinglePayment()
+    return data
+
+@bp_app.route("/send_single_payment", methods=['POST'])
+def sendSinglePayment():
+    data = Transaction.sendSinglePayment()
     return data
 
 @bp_app.route("/verify_path_payment", methods=['POST'])

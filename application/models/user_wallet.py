@@ -41,19 +41,19 @@ class UserWallet:
     def otherWallets():
         try:
             _json = request.json
-            _user_id = _json['user_id']
-            _assetCode = _json['asset_code']
+            _userId = _json['user_id']
             _assetIssuer = _json['asset_issuer']
+            print(_assetIssuer)
+            _assetCode = _json['asset_code']
 
-            # check if user exists
-            check_user = get_userDetails(_user_id)
-            print(check_user)
+            # checking user
+            check_user = get_userDetails(_userId)
             if len(check_user) <= 0:
-                response = make_response(403, "invalid user")
+                response = make_response(403, "INVALID USER")
                 return response
-            
-            _publicKey = check_user[0]['public_key']
-            _secretKey = check_user[0]['secret_key']
+
+            _pubKey = check_user[0]['public_key']
+            _secKey = check_user[0]['secret_key']
 
             server = Server(horizon_url="https://horizon-testnet.stellar.org")
             # using test-network
@@ -61,9 +61,10 @@ class UserWallet:
 
             # adding a wallet
             issuing_asset = Asset(_assetCode, _assetIssuer)
+            print (issuing_asset)
 
             # checking if distributor account exists
-            distributor_account = server.load_account(_publicKey)
+            distributor_account = server.load_account(_pubKey)
 
             # trusting the asset
             trust_transaction = (
@@ -71,19 +72,18 @@ class UserWallet:
                     source_account=distributor_account,
                     network_passphrase=network_passphrase,
                     base_fee=100,
-                ).append_change_trust_op(asset=issuing_asset, limit="1000").set_timeout(100).build()
+                ).append_change_trust_op(asset=issuing_asset, limit="1000000000").set_timeout(100).build()
             )
 
-            trust_transaction.sign(_secretKey)
+            trust_transaction.sign(_secKey)
             trust_transaction_resp = server.submit_transaction(trust_transaction)
-            print(trust_transaction_resp)
-            data = trust_transaction_resp
 
-            response = make_response(100, "New Wallet created successfully", data)
+            response = make_response(100, "successfully added the Asset")
             return response
+
         except Exception as e:
-            print(e)
-            response = make_response(403, "failed to create a new wallet", data)
+            print(str(e))
+            response = make_response(403, str(e))
             return response
 
             
@@ -178,8 +178,8 @@ class UserWallet:
 
 
 # responses
-def make_response(status, message, data):
-    return jsonify({"message": message, "status": status, "data": data})
+def make_response(status, message):
+    return jsonify({"message": message, "status": status})
 
 # responses
 def user_response(status, message):

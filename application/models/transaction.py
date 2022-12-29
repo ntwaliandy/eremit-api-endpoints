@@ -24,91 +24,106 @@ class Transaction:
 
     # create user transaction(payment)
     @staticmethod
-    @token_required
-    def createTransaction():
+    # verify single wallet payment
+    def verifySinglePayment():
         try:
             _json = request.json
-            
-            _from_account = _json['from_account']
-            _to_account = _json['to_account']
-            _transaction_id = uuid.uuid4()
-            _asset_type = _json['asset_type']
-            # _transaction_type = _json['trans_type']
+            _userId = _json['user_id']
+            _receiverName = _json['receiver_name']
             _amount = _json['amount']
-            # _reason = _json['reason']
+            _assetType = _json['asset_type']
 
-            # _statusTo = "debit" 
-            # _statusFrom = "credit"
+
+            # if _amount <= 0:
+            #     response = make_response(403, "LESS AMOUNT TO SEND")
+            #     return response
+
+            check_sender_user = check_user_by_id(_userId)
+            if len(check_sender_user) <= 0:
+                response = make_response(403, "INVALID SENDER USER")
+                return response
+
+            check_receiver_user = check_user_by_username(_receiverName)
+            if len(check_receiver_user) <= 0:
+                response = make_response(403, "INVALID RECEIVER USER")
+                return response
 
             
 
-            server = Server("https://horizon-testnet.stellar.org")
-            source_key = Keypair.from_secret(_from_account)
-            destination_id = _to_account 
+            senderPubKey = check_sender_user[0]['public_key']
+            senderSecKey = check_sender_user[0]['secret_key']
 
-            # First, check to make sure that the destination account exists.
-            # You could skip this, but if the account does not exist, you will be charged
-            # the transaction fee when the transaction fails.
-            try:
-                server.load_account(destination_id)
-            except NotFoundError:
-                # If the account is not found, surface an error message for logging.
-                raise Exception("The destination account does not exist!")
+            receiverPubKey = check_receiver_user[0]['public_key']
+            receiverSecKey = check_receiver_user[0]['secret_key']
 
-            # If there was no error, load up-to-date information on your account.
-            source_account = server.load_account(source_key.public_key)
+            trans_id = str(uuid.uuid4())
+            trans_dict = {"transaction_id": trans_id, "from_account": senderPubKey, "to_account": receiverPubKey, "status": "pending", "amount": _amount, "asset_type": _assetType, "trans_type": "P2P", "reason": ""}
+            db().insert("eremit_db.transaction", **trans_dict)
 
-            # Let's fetch base_fee from network
-            base_fee = server.fetch_base_fee()
+            update_dict = {"senderPubKey": senderPubKey, "senderSecKey": senderSecKey, "receiverPubKey": receiverPubKey, "receiverSecKey": receiverSecKey, "asset_type": _assetType, "amount": _amount, "transaction_id": trans_id}
 
-            # Start building the transaction.
-            transaction = (
-                TransactionBuilder(
-                    source_account=source_account,
-                    network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
-                    base_fee=base_fee,
-                )
-                    # Because Stellar allows transaction in many currencies, you must specify the asset type.
-                    # Here we are sending Lumens.
-                    .append_payment_op(destination=destination_id, asset=_asset_type, amount=_amount)
-                    # A memo allows you to add your own metadata to a transaction. It's
-                    # optional and does not affect how Stellar treats the transaction.
-                    .add_text_memo("Test Transaction")
-                    # Wait a maximum of three minutes for the transaction
-                    .set_timeout(10)
-                    .build()
-            )
-
-            # Sign the transaction to prove you are actually the person sending it.
-            transaction.sign(source_key) 
-
-            try:
-                # And finally, send it off to Stellar!
-                data = server.submit_transaction(transaction)
-                print(f"Response: {data}")
-                
-            except (BadRequestError, BadResponseError) as err:
-                print(f"Something went wrong!\n{err}")
-
-            # print(to_last_name)
-            # send_from_mail = statusMessage(from_email, "You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name)
-
-            # #sending sms using africastalking
-            # from_phone_number = check_from_personal_account[0]['phone_number'] 
-            # sms.send("You have successfully sent " + str(_amount) + " " + from_currency + " to " + to_first_name + " " + to_last_name + "login on clic for more details of your transactions", [from_phone_number], callback=on_finish)
-
-            # send_from_mail = statusMessage(to_email, "You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name)
-            
-            # #sending sms using africastalking
-            # to_phone_number = check_to_personal_account[0]['phone_number']
-            # sms.send("You have successfully received " + str(_amount) + " " + to_currency + " from " + from_first_name + " " + from_last_name + "login on clic for more details of your transactions", [to_phone_number], callback=on_finish)
-
-            response = make_response(100, "transaction statement created", data)
+            response = make_response(100, update_dict)
             return response
 
         except Exception as e:
-            print(e)
-            response = make_response(403, "can't make a transaction")
+            print(str(e))
+            response = make_response(403, "Can't Verify The Transaction")
+            return response
+
+    # send single payment
+    def sendSinglePayment():
+        try:
+            _json = request.json
+
+            _amount = _json['amount']
+            _assetType = _json['asset_type']
+            _receiverPubKey = _json['receiverPubKey']
+            _receiverSecKey = _json['receiverSecKey']
+            _senderPubKey = _json['senderPubKey']
+            _senderSecKey = _json['senderSecKey']
+            _transactionId = _json['transaction_id']
+            _note = _json['message']
+
+            # configuring horizon instance
+            server = Server(horizon_url="https://horizon-testnet.stellar.org")
+
+            # valid sequence number
+            source_account = server.load_account(_senderPubKey)
+
+            base_fee = 100
+
+            # submit the transaction to the testNetwork
+            transaction = TransactionBuilder(
+                source_account=source_account,
+                network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+                base_fee=base_fee
+            ).add_text_memo(_note).append_payment_op(_receiverPubKey, Asset.native(), str(_amount)).set_timeout(60).build()
+
+            # sign the transaction with the SEC KEY
+            transaction.sign(_senderSecKey)
+
+            result = server.submit_transaction(transaction)
+            is_sucess = result['successful']
+            print(is_sucess)
+
+            if is_sucess:
+                update_dict = {"status": "success", "reason": _note}
+                db().Update("eremit_db.transaction", "transaction_id = '" + _transactionId + "' ", **update_dict)
+
+                response =  make_response(100, "Successfully Sent")
+                return response
+
+            else:
+                update_dict = {"status": "failed", "reason": _note}
+                db().Update("eremit_db.transaction", "transaction_id = '" + _transactionId + "' ", **update_dict)
+
+                response =  make_response(100, "Failed to send")
+                return response
+                
+
+        except Exception as e:
+            print(str(e))
+            response = make_response(403, str(e))
             return response
 
     # verifying path payment
@@ -181,7 +196,7 @@ class Transaction:
 
             source_account = server.load_account(account_id=_senderPubKey)
 
-            # checking user stellar wallets
+            # # checking user stellar wallets
             server = Server("https://horizon-testnet.stellar.org")
             account = server.accounts().account_id(_receiverPubKey).call()
             balances = account['balances']
@@ -190,45 +205,61 @@ class Transaction:
                 if bal['asset_type'] != "native":
                     if _receiverAssetCode == bal['asset_code']:
                         assetIss = bal['asset_issuer']
-                
+                print(assetIss)
             # generate path-payment
-            path_data = requests.get("https://horizon-testnet.stellar.org/paths/strict-send?destination_assets=" + _receiverAssetCode + ":" + assetIss + "&source_asset_type=" + _senderAssetCode + "&source_amount=" + _amount)
+            path_data = requests.get("https://horizon-testnet.stellar.org/offers?buying=" + _receiverAssetCode + ":" + assetIss + "&selling=" + _senderAssetCode)
             path_res = path_data.json()
+            print(path_res)
 
-            receiver_amount = path_res['_embedded']['records'][0]['destination_amount']
-            path_assetCode = path_res['_embedded']['records'][0]['path'][0]['asset_code']
-            print(path_assetCode)
-            path_assetIssuer = path_res['_embedded']['records'][0]['path'][0]['asset_issuer']
-            print(path_assetIssuer)
+            receiver_amount = path_res['_embedded']['records'][0]['amount']
+            print(receiver_amount)
+            # path_assetCode = path_res['_embedded']['records'][0]['path'][0]['asset_code']
+            # print(path_assetCode)
+            # path_assetIssuer = path_res['_embedded']['records'][0]['path'][0]['asset_issuer']
+            # print(path_assetIssuer)
 
             
 
-            transaction = TransactionBuilder(
-                source_account=source_account,
-                network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
-                base_fee=100,
-            ).append_path_payment_strict_receive_op(
-                destination= _receiverPubKey,
-                send_asset= Asset(_senderAssetCode, _senderPubKey),
-                send_max=_amount,
-                dest_asset=Asset(_receiverAssetCode, _receiverPubKey),
-                dest_amount=receiver_amount,
-                path=[
-                    Asset(path_assetCode, path_assetIssuer)
-                ]
-            ).set_timeout(30).build()
-
+            transaction = ( 
+                TransactionBuilder(
+                    source_account=source_account,
+                    network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+                    base_fee=100,
+                )
+                .append_path_payment_strict_send_op(
+                    destination= _receiverPubKey,
+                    send_asset= Asset(_senderAssetCode, _senderPubKey),
+                    send_amount=_amount,
+                    dest_asset=Asset(_receiverAssetCode, _receiverPubKey),
+                    dest_min=receiver_amount,
+                #     # path=[
+                #     #     Asset(path_assetCode, path_assetIssuer)
+                #     # ]
+                )
+                .set_timeout(30)
+                .build()
+            )
             transaction.sign(source_keypair)
             res = server.submit_transaction(transaction)
-
             print(res)
-
-            response = path_response(100, "rrerer")
+            response = make_response(403, res['extras']['result_codes'])
             return response
+            # is_sucess = res['successful']
+            # print(is_sucess)
+
+            # if is_sucess:
+            #     response =  make_response(100, "Successfully Sent")
+            #     return response
+
+            # else:
+            #     response =  make_response(100, "Failed to send")
+            #     return response
+            # response = make_response(100, resp)
+            # return response
 
         except Exception as e:
             data = json.loads(str(e))
-            response = path_response(403, data['extras']['result_codes'])
+            response = make_response(403, data['extras']['result_codes'])
             return response
     # display all transactions
     @staticmethod
@@ -787,8 +818,8 @@ class Transaction:
 
 
 # responses
-def make_response(status, message, res):
-    return jsonify({"message": message, "status": status, "res": res})
+def make_response(status, message):
+    return jsonify({"message": message, "status": status})
 
 #path payment response
 def path_response(status, message):
