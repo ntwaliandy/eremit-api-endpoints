@@ -185,11 +185,12 @@ class Transaction:
             source_keypair = Keypair.from_secret(_senderSecKey)
 
             source_account = server.load_account(account_id=_senderPubKey)
-
+            print(source_account)
             # checking user stellar wallets
             server = Server("https://horizon-testnet.stellar.org")
             account = server.accounts().account_id(_receiverPubKey).call()
             balances = account['balances']
+            print(balances)
             assetIss = ""
             for bal in balances:
                 if bal['asset_type'] != "native":
@@ -201,24 +202,34 @@ class Transaction:
             path_data = requests.get("https://horizon-testnet.stellar.org/paths/strict-send?destination_assets=" + _receiverAssetCode + ":" + assetIss + "&source_asset_type=" + _senderAssetCode + "&source_amount=" + _amount)
             path_res = path_data.json()
 
+            if path_res['_embedded']['records'] == []:
+                response = make_response(403, "No Trade Offer Currently!")
+                return response
+
+
             receiver_amount = path_res['_embedded']['records'][0]['destination_amount']
             path_assetCode = path_res['_embedded']['records'][0]['path'][0]['asset_code']
+            path1_assetCode = path_res['_embedded']['records'][0]['path'][1]['asset_code']
             print(path_assetCode)
+            print(path1_assetCode)
             path_assetIssuer = path_res['_embedded']['records'][0]['path'][0]['asset_issuer']
+            path1_assetIssuer = path_res['_embedded']['records'][0]['path'][1]['asset_issuer']
+            print(path1_assetIssuer)
             print(path_assetIssuer)
 
             transaction = TransactionBuilder(
                 source_account=source_account,
                 network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
                 base_fee=100,
-            ).append_path_payment_strict_receive_op(
+            ).append_path_payment_strict_send_op(
                 destination= _receiverPubKey,
+                dest_min= receiver_amount,
                 send_asset= Asset(_senderAssetCode, _senderPubKey),
-                send_max=_amount,
+                send_amount= _amount,
                 dest_asset=Asset(_receiverAssetCode, _receiverPubKey),
-                dest_amount=receiver_amount,
                 path=[
-                    Asset(path_assetCode, path_assetIssuer)
+                    Asset(path_assetCode, path_assetIssuer),
+                    Asset(path1_assetCode, path1_assetIssuer)
                 ]
             ).set_timeout(30).build()
 
@@ -231,8 +242,8 @@ class Transaction:
             return response
 
         except Exception as e:
-            data = json.loads(str(e))
-            response = make_response(403, data['extras']['result_codes'])
+            # data = json.loads(str(e))
+            response = make_response(403, str(e))
             return response
 
 

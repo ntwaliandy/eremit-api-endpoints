@@ -1,1 +1,1 @@
-UPDATE eremit_db.transaction SET status=%s, reason=%s WHERE transaction_id = 'c6b8ffc1-cd22-4f91-8884-ff6b21e8d823' 
+UPDATE eremit_db.transaction SET status=%s, reason=%s WHERE transaction_id = 'cabd30b3-f4db-4f40-9486-357d0691b4c1' 
